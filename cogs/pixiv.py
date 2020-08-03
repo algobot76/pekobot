@@ -1,5 +1,3 @@
-import os
-
 from discord.ext import commands
 from pixivpy3 import AppPixivAPI
 
@@ -15,13 +13,17 @@ class Pixiv(commands.Cog):
 
     @commands.command(name="Pixiv", aliases=("pixiv", "PIXIV"))
     async def pixiv(self, ctx, option):
+        mode = ""
         if option == "推荐":
-            result = self.api.illust_ranking('day')
-            illusts = result.illusts[:10]
-            for illust in illusts:
-                await ctx.send(
-                    f"{illust.title} - https://www.pixiv.net/artworks/{illust.id}"
-                )
+            mode = "day"
+        elif option == "色图" or option == "涩图" or option == "setu":
+            mode = "day_r18"
+
+        result = self.api.illust_ranking(mode)
+        illusts = result.illusts[:10]
+        for illust in illusts:
+            await ctx.send(
+                f"{illust.title} - https://www.pixiv.net/artworks/{illust.id}")
         else:
             await ctx.send(f"未知选项：{option}")
 
