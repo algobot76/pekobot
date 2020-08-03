@@ -1,2 +1,3 @@
 discord.py==1.3.4
+git+https://github.com/upbit/pixivpy.git
 PyYAML==5.3.1

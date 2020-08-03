@@ -1,3 +1,7 @@
 discord_token:
+pixiv:
+  username:
+  password:
 cogs:
   - cogs.nicknames
+  - cogs.pixiv
