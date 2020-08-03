@@ -1,1 +1,3 @@
 discord_token:
+cogs:
+  - cogs.nicknames

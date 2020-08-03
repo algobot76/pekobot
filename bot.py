@@ -3,7 +3,10 @@ from discord.ext import commands
 from utils import config
 
 conf = config.load_config()
-bot = commands.Bot(command_prefix="!")
+bot = commands.Bot(command_prefix=("!", "！"))
+
+for cog in conf["cogs"]:
+    bot.load_extension(cog)
 
 
 @bot.event
