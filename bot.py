@@ -1,8 +1,8 @@
-import os
-
 from discord.ext import commands
 
-TOKEN = os.getenv("DISCORD_TOKEN")
+from utils import config
+
+conf = config.load_config()
 bot = commands.Bot(command_prefix="!")
 
 
@@ -22,4 +22,4 @@ async def _sum(ctx, *args):
     await ctx.send(f'Sum: {result}')
 
 
-bot.run(TOKEN)
+bot.run(conf['discord_token'])
