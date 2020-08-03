@@ -1,0 +1,9 @@
+{
+  "apps": [
+    {
+      "name": "pekobot",
+      "script": "bot.py",
+      "interpreter": "env/bin/python"
+    }
+  ]
+}
