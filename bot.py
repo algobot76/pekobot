@@ -14,6 +14,14 @@ async def on_ready():
     print(f'{bot.user} has connected to Discord!')
 
 
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandNotFound):
+        await ctx.send("老娘不认识的指令呢～～")
+        return
+    raise error
+
+
 @bot.command(name="foo")
 async def foo(ctx):
     await ctx.send("Bar")
