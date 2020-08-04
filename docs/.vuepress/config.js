@@ -4,7 +4,7 @@ module.exports = {
   /**
    * Ref：https://v1.vuepress.vuejs.org/config/#title
    */
-  title: 'Vuepress Docs Boilerplate',
+  title: 'Pekobot',
   /**
    * Ref：https://v1.vuepress.vuejs.org/config/#description
    */
@@ -36,26 +36,25 @@ module.exports = {
     lastUpdated: false,
     nav: [
       {
-        text: 'Guide',
+        text: '指南',
         link: '/guide/',
       },
       {
-        text: 'Config',
+        text: '配置',
         link: '/config/'
       },
       {
-        text: 'VuePress',
-        link: 'https://v1.vuepress.vuejs.org'
+        text: 'GitHub',
+        link: 'https://www.github.com/marchen-kingdom/pekobot'
       }
     ],
     sidebar: {
       '/guide/': [
         {
-          title: 'Guide',
+          title: '指南',
           collapsable: false,
           children: [
-            '',
-            'using-vue',
+            'deployment',
           ]
         }
       ],
