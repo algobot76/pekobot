@@ -1,5 +1,8 @@
 import asyncio
+import os
 
+import aiohttp
+import brotli
 from discord.ext import commands
 
 from utils import config
@@ -10,15 +13,25 @@ class Bot(commands.Bot):
     def __init__(self, **kwargs):
         super().__init__(command_prefix=kwargs.pop("command_prefix"))
 
-        self.db_conn = kwargs.pop("db_conn")
+        self.pcr_db = kwargs.pop("pcr_db")
 
 
 conf = config.load_config()
 
 
 async def run():
-    conn = db.create_connection("pekobot.db")
-    bot = Bot(command_prefix=("!", "！"), db_conn=conn)
+    # Download redive_jp.db from https://redive.estertion.win/ if it doesn't exist
+    if not os.path.exists("redive_jp.db"):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                    "https://redive.estertion.win/db/redive_jp.db.br") as resp:
+                brotli_result = await resp.read()
+                data = brotli.decompress(brotli_result)
+                with open("redive_jp.db", "wb") as f:
+                    f.write(data)
+
+    pcr_db = db.create_connection("redive_jp.db")
+    bot = Bot(command_prefix=("!", "！"), pcr_db=pcr_db)
     for cog in conf["cogs"]:
         bot.load_extension(cog)
 
@@ -29,7 +42,7 @@ async def run():
     try:
         await bot.start(conf['discord_token'])
     except KeyboardInterrupt:
-        conn.close()
+        pcr_db.close()
         await bot.logout()
 
 

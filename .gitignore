@@ -137,6 +137,9 @@ dmypy.json
 ### SQLite ###
 *.db
 
+### Brotli ###
+*.br
+
 ### Images ###
 images/
 
