@@ -7,3 +7,6 @@ cogs:
   - cogs.pcrclanbattles
   - cogs.peko
   - cogs.pixiv
+ignored_channels:
+  - foo
+  - bar
