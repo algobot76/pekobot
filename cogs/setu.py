@@ -11,6 +11,7 @@ class Setu(commands.Cog):
         self.setu_path = os.path.join("images", "setu")
 
     @commands.command(name="setu", aliases=("Setu", "色图", "涩图"))
+    @commands.is_nsfw()
     async def send_setu(self, ctx):
         setu_images = os.listdir(self.setu_path)
         num = random.randint(0, len(setu_images))
