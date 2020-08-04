@@ -1,5 +1,8 @@
 import asyncio
+import os
 
+import aiohttp
+import brotli
 from discord.ext import commands
 
 from utils import config
@@ -21,6 +24,16 @@ async def run():
     bot = Bot(command_prefix=("!", "！"), db_conn=conn)
     for cog in conf["cogs"]:
         bot.load_extension(cog)
+
+    # Download redive_jp.db from https://redive.estertion.win/ if it doesn't exist
+    if not os.path.exists("redive_jp.db"):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                    "https://redive.estertion.win/db/redive_jp.db.br") as resp:
+                brotli_result = await resp.read()
+                data = brotli.decompress(brotli_result)
+                with open("redive_jp.db", "wb") as f:
+                    f.write(data)
 
     @bot.event
     async def on_ready():
