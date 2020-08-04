@@ -4,7 +4,8 @@ pixiv:
   password:
 cogs:
   - cogs.nicknames
-  - cogs.pcrclanbattles
+  - cogs.gacha
+#  - cogs.pcrclanbattles
   - cogs.peko
   - cogs.pixiv
   - cogs.setu
