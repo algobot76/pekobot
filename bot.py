@@ -26,6 +26,12 @@ async def run():
     async def on_ready():
         print(f'{bot.user} has connected to Discord!')
 
+    @bot.event
+    async def on_message(msg):
+        name = msg.channel.name
+        if name in conf["ignored_channels"]:
+            return
+
     try:
         await bot.start(conf['discord_token'])
     except KeyboardInterrupt:
