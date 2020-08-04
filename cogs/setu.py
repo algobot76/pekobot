@@ -11,15 +11,18 @@ class Setu(commands.Cog):
         self.setu_path = os.path.join("images", "setu")
 
     @commands.command(name="setu", aliases=("Setu", "色图", "涩图"))
-    @commands.is_nsfw()
     async def send_setu(self, ctx):
-        setu_images = os.listdir(self.setu_path)
-        num = random.randint(0, len(setu_images))
-        if num == 0:
-            await ctx.send("我已经被榨干了，呜～～")
+        print(ctx.channel.is_nsfw())
+        if ctx.channel.is_nsfw():
+            setu_images = os.listdir(self.setu_path)
+            num = random.randint(0, len(setu_images))
+            if num == 0:
+                await ctx.send("我已经被榨干了，呜～～")
+            else:
+                await ctx.send(file=discord.File(
+                    os.path.join(self.setu_path, setu_images[num - 1])))
         else:
-            await ctx.send(file=discord.File(
-                os.path.join(self.setu_path, setu_images[num - 1])))
+            await ctx.send("你想要啥呢？变态ヽ(`⌒´メ)ノ")
 
 
 def setup(bot):
