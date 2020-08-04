@@ -6,21 +6,20 @@ import brotli
 from discord.ext import commands
 
 from utils import config
+from utils import db
 
 
 class Bot(commands.Bot):
     def __init__(self, **kwargs):
         super().__init__(command_prefix=kwargs.pop("command_prefix"))
 
+        self.pcr_db = kwargs.pop("pcr_db")
+
 
 conf = config.load_config()
 
 
 async def run():
-    bot = Bot(command_prefix=("!", "！"))
-    for cog in conf["cogs"]:
-        bot.load_extension(cog)
-
     # Download redive_jp.db from https://redive.estertion.win/ if it doesn't exist
     if not os.path.exists("redive_jp.db"):
         async with aiohttp.ClientSession() as session:
@@ -31,6 +30,11 @@ async def run():
                 with open("redive_jp.db", "wb") as f:
                     f.write(data)
 
+    pcr_db = db.create_connection("redive_jp.db")
+    bot = Bot(command_prefix=("!", "！"), pcr_db=pcr_db)
+    for cog in conf["cogs"]:
+        bot.load_extension(cog)
+
     @bot.event
     async def on_ready():
         print(f'{bot.user} has connected to Discord!')
@@ -38,6 +42,7 @@ async def run():
     try:
         await bot.start(conf['discord_token'])
     except KeyboardInterrupt:
+        pcr_db.close()
         await bot.logout()
 
 
