@@ -5,4 +5,5 @@ pixiv:
 cogs:
   - cogs.nicknames
   - cogs.pcrclanbattles
+  - cogs.peko
   - cogs.pixiv

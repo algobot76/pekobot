@@ -26,13 +26,6 @@ async def run():
     async def on_ready():
         print(f'{bot.user} has connected to Discord!')
 
-    @bot.event
-    async def on_command_error(ctx, error):
-        if isinstance(error, commands.CommandNotFound):
-            await ctx.send("老娘不认识的指令呢～～")
-            return
-        raise error
-
     try:
         await bot.start(conf['discord_token'])
     except KeyboardInterrupt:
