@@ -4,4 +4,5 @@ pixiv:
   password:
 cogs:
   - cogs.nicknames
+  - cogs.pcrclanbattles
   - cogs.pixiv
