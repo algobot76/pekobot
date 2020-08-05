@@ -46,8 +46,8 @@ class Peko(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, msg):
         if "春黑" in msg.content:
-            await msg.channel.send(
-                file=discord.File(os.path.join("cogs", "data", "nyb.gif")))
+            await msg.channel.send(file=discord.File(
+                os.path.join("pekobot", "cogs", "data", "nyb.gif")))
             await msg.channel.send(NYB_TEXT)
 
     @commands.command(name="tap", aliases=("戳", "👇"))

@@ -1,8 +1,9 @@
-import yaml
+import os
 
+import yaml
 from discord.ext import commands
 
-NICKNAMES_FILE_PATH = "cogs/data/nicknames.yaml"
+NICKNAMES_FILE_PATH = os.path.join("pekobot", "cogs", "data", "nicknames.yaml")
 
 
 class Nicknames(commands.Cog):
