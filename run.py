@@ -32,7 +32,7 @@ async def run():
     pcr_db = db.create_connection("../redive_jp.db")
     bot = Bot(command_prefix=("!", "！"), pcr_db=pcr_db)
     for cog in conf["cogs"]:
-        bot.load_extension(f"pekobot.{cog}")
+        bot.load_extension(f"pekobot.cogs.{cog}")
 
     @bot.event
     async def on_ready():
