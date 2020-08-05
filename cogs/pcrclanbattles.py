@@ -3,6 +3,7 @@ import logging
 import discord
 from discord.ext import commands
 
+from utils import checks
 from utils import db
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,7 @@ class PCRClanBattles(commands.Cog):
 
     @commands.command(name="建会")
     @commands.guild_only()
+    @checks.is_admin()
     async def create_clan(self, ctx: discord.ext.commands.Context):
         logger.info(f"Creating a clan for the guild {ctx.guild}.")
         if not db.table_exists(self.pcb_db, CLAN_MEMBER_TABLE):
