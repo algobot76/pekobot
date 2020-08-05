@@ -70,6 +70,27 @@ class PCRClanBattles(commands.Cog):
             logger.info(f"{author} has joined the clan.")
             await ctx.send("入会成功")
 
+    @commands.command(name="list-members", aliases=("查看成员", ))
+    @commands.guild_only()
+    async def list_members(self, ctx: commands.Context):
+        logger.info(f"{ctx.author} wants to list all members of the clan.")
+
+        cursor = self.pcb_db.cursor()
+        if not db.table_exists(self.pcb_db, CLAN_MEMBER_TABLE):
+            logger.error("The clan has not been created yet.")
+            await ctx.send("公会尚未建立")
+        else:
+            list_members = '''
+            SELECT member_name FROM clan_member;
+            '''
+            cursor.execute(list_members)
+            names = [name for name, in cursor.fetchall()]
+            if not names:
+                await ctx.send("暂无成员入会")
+                return
+            report = '\n'.join(names)
+            await ctx.send(report)
+
 
 def setup(bot):
     bot.add_cog(PCRClanBattles(bot))
