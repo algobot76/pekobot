@@ -2,7 +2,7 @@
   "apps": [
     {
       "name": "pekobot",
-      "script": "bot.py",
+      "script": "run.py",
       "interpreter": "env/bin/python"
     }
   ]
