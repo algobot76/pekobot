@@ -1,6 +1,11 @@
+import logging
+
+import discord
 from discord.ext import commands
 
 from utils import db
+
+logger = logging.getLogger(__name__)
 
 DB_NAME = "pcrclanbattles.db"
 
@@ -21,12 +26,15 @@ class PCRClanBattles(commands.Cog):
 
     @commands.command(name="建会")
     @commands.guild_only()
-    async def create_clan(self, ctx):
+    async def create_clan(self, ctx: discord.ext.commands.Context):
+        logger.info(f"Creating a clan for the guild {ctx.guild}.")
         if not db.table_exists(self.pcb_db, CLAN_MEMBER_TABLE):
             cursor = self.pcb_db.cursor()
             cursor.execute(CREATE_CLAN_MEMBER_TABLE)
+            logger.info("The clan has been created.")
             await ctx.send("建会成功")
         else:
+            logger.warning("The clan already exists.")
             await ctx.send("公会已存在")
 
 

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 
 import aiohttp
@@ -15,6 +16,12 @@ class Bot(commands.Bot):
         self.session = aiohttp.ClientSession(loop=self.loop)
         self.pcr_db = kwargs.pop("pcr_db")
 
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S')
+logger = logging.getLogger('pekobot')
 
 conf = config.load_config()
 
@@ -37,7 +44,7 @@ async def run():
 
     @bot.event
     async def on_ready():
-        print(f'{bot.user} has connected to Discord!')
+        logger.info(f'{bot.user} has connected to Discord!')
 
     try:
         await bot.start(conf['discord_token'])
