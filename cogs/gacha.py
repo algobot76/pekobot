@@ -43,7 +43,19 @@ class Gacha(commands.Cog):
         self.bot = bot
 
     @commands.command(name="gacha", aliases=("抽卡", "扭蛋"))
-    async def draw(self, ctx):
+    async def rolls(self, ctx, n="10"):
+        # n must be a number
+        if not n.isdigit():
+            await ctx.send("草，别输入一些乱七八糟的东西啊！！！")
+            return
+
+        n = int(n)
+
+        # n must be >= 1 and <=10
+        if n < 1 or n > 10:
+            await ctx.send("请输入1和10之间的数字")
+            return
+
         cursor = self.bot.pcr_db.cursor()
         cursor.execute('''
         SELECT unit_id, rarity, is_limited, comment
@@ -64,7 +76,7 @@ class Gacha(commands.Cog):
         items = [item for item in items if item[1][1] == 0]
 
         # TODO: Allow duplicate characters
-        selected = random.choices(items, k=10)
+        selected = random.choices(items, k=n)
         download_requests = []
         # TODO: Cache image files
         for item in selected:
