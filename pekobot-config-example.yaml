@@ -5,7 +5,7 @@ pixiv:
 cogs:
   - cogs.nicknames
   - cogs.gacha
-#  - cogs.pcrclanbattles
+  - cogs.pcrclanbattles
   - cogs.peko
   - cogs.pixiv
   - cogs.setu
