@@ -2,7 +2,6 @@ import asyncio
 import io
 import random
 
-import aiohttp
 import discord
 from PIL import Image
 from discord.ext import commands
@@ -12,9 +11,9 @@ def get_unit_icon_id(unit_id, rarity):
     return int(unit_id) + rarity * 10
 
 
-async def download_unit_icon(unit_icon_id):
+async def download_unit_icon(session, unit_icon_id):
     url = f"https://redive.estertion.win/icon/unit/{unit_icon_id}.webp"
-    async with aiohttp.request(method="GET", url=url) as resp:
+    async with session.get(url) as resp:
         data = io.BytesIO(await resp.read())
         return unit_icon_id, data
 
@@ -72,7 +71,8 @@ class Gacha(commands.Cog):
             unit_id = item[0]
             rarity = item[1][0]
             unit_icon_id = get_unit_icon_id(unit_id, rarity)
-            download_requests.append(download_unit_icon(unit_icon_id))
+            download_requests.append(
+                download_unit_icon(self.bot.session, unit_icon_id))
         downloaded_images = await asyncio.gather(*download_requests)
         images = [bytes_to_image(image[1]) for image in downloaded_images]
         gacha_result = image_to_bytes(combine_images_h(images))
