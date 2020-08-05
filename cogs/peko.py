@@ -56,6 +56,24 @@ class Peko(commands.Cog):
         comment = random.choice(self.comments)
         await ctx.send(comment)
 
+    @commands.command(name="status", aliases=("状态", ))
+    async def status(self, ctx: discord.ext.commands.Context):
+        logger.info(f"Pekobot's status has been queried by {ctx.author}.")
+        setu_dir = os.path.join("images", "setu")
+        setu_count = count_files(setu_dir)
+        setu_status = f"目前涩图数量：{setu_count}\n"
+        header = "状态报告：\n\n"
+        report = header + setu_status
+        await ctx.send(report)
+
 
 def setup(bot):
     bot.add_cog(Peko(bot))
+
+
+def count_files(dir):
+    count = 0
+    for path in os.listdir(dir):
+        if os.path.isfile(os.path.join(dir, path)):
+            count += 1
+    return count
