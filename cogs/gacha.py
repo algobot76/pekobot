@@ -43,7 +43,7 @@ class Gacha(commands.Cog):
         self.bot = bot
 
     @commands.command(name="gacha", aliases=("抽卡", "扭蛋"))
-    async def draw(self, ctx):
+    async def rolls(self, ctx):
         cursor = self.bot.pcr_db.cursor()
         cursor.execute('''
         SELECT unit_id, rarity, is_limited, comment
