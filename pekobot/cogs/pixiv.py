@@ -1,7 +1,7 @@
 from discord.ext import commands
 from pixivpy3 import AppPixivAPI
 
-from utils import config
+from pekobot.utils import config
 
 
 class Pixiv(commands.Cog):
