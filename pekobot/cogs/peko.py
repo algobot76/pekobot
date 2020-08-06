@@ -23,7 +23,8 @@ class Peko(commands.Cog):
         SELECT description FROM unit_comments
         WHERE unit_id={PEKO_ID}
         '''
-        cursor = self.bot.pcr_db.cursor()
+        conn = self.bot.g.get("pcr_db")
+        cursor = conn.cursor()
         cursor.execute(query)
         self.comments = []
         for comment, in cursor.fetchall():
