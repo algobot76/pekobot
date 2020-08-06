@@ -143,19 +143,6 @@ dmypy.json
 ### Images ###
 images/
 
-### Vuepress ###
-pids
-logs
-node_modules
-npm-debug.log
-coverage/
-run
-dist
-.nyc_output
-.basement
-config.local.js
-basement_dist
-
 ### Config ###
 pekobot-config.yaml
 
