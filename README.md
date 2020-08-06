@@ -12,4 +12,5 @@
 
 ## 交流方式
 
-- 官方Discord: https://discord.gg/w9mzcZe
+- QQ: 903741415
+- Discord: https://discord.gg/w9mzcZe
