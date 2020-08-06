@@ -55,8 +55,8 @@ class Gacha(commands.Cog):
         if n < 1 or n > 10:
             await ctx.send("请输入1和10之间的数字")
             return
-
-        cursor = self.bot.pcr_db.cursor()
+        conn = self.bot.g.get("pcr_db")
+        cursor = conn.cursor()
         cursor.execute('''
         SELECT unit_id, rarity, is_limited, comment
         FROM unit_data

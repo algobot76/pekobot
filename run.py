@@ -20,16 +20,16 @@ conf = config.load_config()
 
 async def run():
     # Download redive_jp.db from https://redive.estertion.win/ if it doesn't exist
-    if not os.path.exists("../redive_jp.db"):
+    if not os.path.exists("redive_jp.db"):
         async with aiohttp.ClientSession() as session:
             async with session.get(
                     "https://redive.estertion.win/db/redive_jp.db.br") as resp:
                 brotli_result = await resp.read()
                 data = brotli.decompress(brotli_result)
-                with open("../redive_jp.db", "wb") as f:
+                with open("redive_jp.db", "wb") as f:
                     f.write(data)
 
-    pcr_db = db.create_connection("../redive_jp.db")
+    pcr_db = db.create_connection("redive_jp.db")
     bot = Bot(command_prefix=("!", "！"), pcr_db=pcr_db)
     for cog in conf["cogs"]:
         bot.load_extension(f"pekobot.cogs.{cog}")
