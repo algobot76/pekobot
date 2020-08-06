@@ -154,3 +154,11 @@ pekobot-config.yaml
 
 ### JetBrains ###
 .idea/
+
+### Docusaurus ###
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.docusaurus
+.cache-loader
