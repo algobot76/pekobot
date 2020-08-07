@@ -38,12 +38,14 @@ def image_to_bytes(image):
     return buf
 
 
-class Gacha(commands.Cog):
+class Gacha(commands.Cog, name="抽卡插件"):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command(name="gacha", aliases=("抽卡", "扭蛋"))
     async def rolls(self, ctx, n="10"):
+        """模拟抽卡（默认：10连）。"""
+
         # n must be a number
         if not n.isdigit():
             await ctx.send("草，别输入一些乱七八糟的东西啊！！！")
