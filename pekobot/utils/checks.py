@@ -1,8 +1,14 @@
+"""A decorator module build on top of discord.ext.commands.check.
+This module contains various decorators used to validate discord commands. For
+example, you can use is_admin() to make sure the command can only be called by
+an administrator.
+"""
 from discord.ext import commands
 
 
 def is_admin():
-    async def predicate(ctx: commands.Context):
+    """Checks if the user is an administrator."""
+    async def predicate(ctx: commands.Context) -> bool:
         ch = ctx.channel
         permissions = ch.permissions_for(ctx.author)
 
@@ -15,7 +21,8 @@ def is_admin():
 
 
 def is_nsfw():
-    async def predicate(ctx: commands.Context):
+    """Checks if the channel is a NSFW channel."""
+    async def predicate(ctx: commands.Context) -> bool:
         ch = ctx.channel
 
         if not ch.is_nsfw():
