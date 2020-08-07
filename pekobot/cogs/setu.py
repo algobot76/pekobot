@@ -1,3 +1,4 @@
+"""Setu cog"""
 import logging
 import os
 import random
@@ -10,21 +11,31 @@ from pekobot.utils import checks
 
 logger = logging.getLogger(__name__)
 
+SETU_PATH = os.path.join("images", "setu")
 
-class Setu(commands.Cog):
+
+class Setu(commands.Cog, name="色图插件"):
+    """The Setu cog
+
+    Attributes:
+        bot: A Pekobot instance.
+    """
     def __init__(self, bot: Bot):
         self.bot = bot
-        self.setu_path = os.path.join("images", "setu")
 
     @commands.command(name="setu", aliases=("色图", "涩图"))
     @checks.is_nsfw()
     async def send_setu(self, ctx: commands.Context):
+        """来一份色图。"""
+
         author = ctx.author
         logger.info(f"{author} is requesting a setu.")
-        setu_images = os.listdir(self.setu_path)
+        setu_images = os.listdir(SETU_PATH)
         selected_image = random.choice(setu_images)
-        await ctx.send(file=File(os.path.join(self.setu_path, selected_image)))
+        await ctx.send(file=File(os.path.join(SETU_PATH, selected_image)))
 
 
 def setup(bot):
+    """A helper fuction used to load the cog."""
+
     bot.add_cog(Setu(bot))
