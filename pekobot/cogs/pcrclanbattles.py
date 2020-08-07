@@ -1,7 +1,9 @@
+"""PCR clan battles cog"""
 import logging
 
 from discord.ext import commands
 
+from pekobot.bot import Bot
 from pekobot.utils import checks, db
 
 logger = logging.getLogger(__name__)
@@ -19,7 +21,13 @@ CREATE TABLE {CLAN_MEMBER_TABLE} (
 
 
 class PCRClanBattles(commands.Cog):
-    def __init__(self, bot):
+    """The PCR clan battles cog.
+
+    Attributes:
+        bot: A pekobot instance.
+        pcb_cb: A DB connection to PCB.
+    """
+    def __init__(self, bot: Bot):
         self.bot = bot
         self.pcb_db = db.create_connection(DB_NAME)  # PCB = PCR Clan Battles
 
@@ -27,6 +35,12 @@ class PCRClanBattles(commands.Cog):
     @commands.guild_only()
     @checks.is_admin()
     async def create_clan(self, ctx: commands.Context):
+        """Creates a new clan.
+
+        Args:
+            ctx: A command context.
+        """
+
         logger.info(f"Creating a clan for the guild {ctx.guild}.")
         if not db.table_exists(self.pcb_db, CLAN_MEMBER_TABLE):
             cursor = self.pcb_db.cursor()
@@ -40,6 +54,12 @@ class PCRClanBattles(commands.Cog):
     @commands.command(name="入会")
     @commands.guild_only()
     async def join_clan(self, ctx: commands.Context):
+        """Joins the clan.
+
+        Args:
+            ctx: A command context.
+        """
+
         logger.info(f"{ctx.author} is trying to join the clan.")
 
         if not db.table_exists(self.pcb_db, CLAN_MEMBER_TABLE):
@@ -73,6 +93,12 @@ class PCRClanBattles(commands.Cog):
     @commands.command(name="list-members", aliases=("查看成员", ))
     @commands.guild_only()
     async def list_members(self, ctx: commands.Context):
+        """Lists the clan members.
+
+        Args:
+            ctx: A command context.
+        """
+
         logger.info(f"{ctx.author} wants to list all members of the clan.")
 
         cursor = self.pcb_db.cursor()
@@ -93,4 +119,6 @@ class PCRClanBattles(commands.Cog):
 
 
 def setup(bot):
+    """A helper function used to load the cog."""
+
     bot.add_cog(PCRClanBattles(bot))
