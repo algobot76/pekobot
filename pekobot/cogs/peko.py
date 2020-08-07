@@ -6,7 +6,7 @@ import random
 import discord
 from discord.ext import commands
 
-from pekobot.bot import Bot
+from pekobot.pekobot import Pekobot
 
 NYB_TEXT = '''
 正在播放：New Year Burst
@@ -108,7 +108,7 @@ class Peko(commands.Cog, name="佩可插件"):
         await ctx.send(report)
 
 
-def setup(bot: Bot):
+def setup(bot: Pekobot):
     """A helper function used to load the cog."""
 
     bot.add_cog(Peko(bot))

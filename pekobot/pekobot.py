@@ -3,7 +3,7 @@ import aiohttp
 from discord.ext import commands
 
 
-class Bot(commands.Bot):
+class Pekobot(commands.Bot):
     """Representation of Pekobot.
 
     Attributes:

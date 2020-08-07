@@ -6,7 +6,7 @@ import os
 import aiohttp
 import brotli
 
-from pekobot.bot import Bot
+from pekobot.pekobot import Pekobot
 from pekobot.utils import config
 from pekobot.utils import db
 
@@ -40,7 +40,7 @@ async def run():
                     f.write(data)
 
     pcr_db = db.create_connection("redive_jp.db")
-    bot = Bot(command_prefix=("!", "！"), pcr_db=pcr_db)
+    bot = Pekobot(command_prefix=("!", "！"), pcr_db=pcr_db)
     for cog in conf["cogs"]:
         bot.load_extension(f"pekobot.cogs.{cog}")
         logger.info("%s has been loaded.", cog)
