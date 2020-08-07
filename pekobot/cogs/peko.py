@@ -91,7 +91,7 @@ class Peko(commands.Cog, name="佩可插件"):
     async def send_random_comment(self, ctx: commands.Context):
         """让佩可说出一个随机台词。"""
 
-        logger.info("Pekobot has been tapped by {member}.", member=ctx.author)
+        logger.info("Pekobot has been tapped by %s.", ctx.author)
         comment = random.choice(self.comments)
         await ctx.send(comment)
 
@@ -99,8 +99,7 @@ class Peko(commands.Cog, name="佩可插件"):
     async def status(self, ctx: discord.ext.commands.Context):
         """查看机器人状态。"""
 
-        logger.info("Pekobot's status has been queried by {member}.",
-                    member=ctx.author)
+        logger.info("Pekobot's status has been queried by %s.", ctx.author)
         setu_dir = os.path.join("images", "setu")
         setu_count = count_files(setu_dir)
         setu_status = f"目前涩图数量：{setu_count}\n"
