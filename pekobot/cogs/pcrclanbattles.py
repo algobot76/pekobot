@@ -20,7 +20,7 @@ CREATE TABLE {CLAN_MEMBER_TABLE} (
 '''
 
 
-class PCRClanBattles(commands.Cog):
+class PCRClanBattles(commands.Cog, name="PCR公会战插件"):
     """The PCR clan battles cog.
 
     Attributes:
@@ -31,15 +31,11 @@ class PCRClanBattles(commands.Cog):
         self.bot = bot
         self.pcb_db = db.create_connection(DB_NAME)  # PCB = PCR Clan Battles
 
-    @commands.command(name="建会")
+    @commands.command(name="create-clan", aliases=("建会", ))
     @commands.guild_only()
     @checks.is_admin()
     async def create_clan(self, ctx: commands.Context):
-        """Creates a new clan.
-
-        Args:
-            ctx: A command context.
-        """
+        """创建公会。"""
 
         logger.info(f"Creating a clan for the guild {ctx.guild}.")
         if not db.table_exists(self.pcb_db, CLAN_MEMBER_TABLE):
@@ -51,14 +47,10 @@ class PCRClanBattles(commands.Cog):
             logger.warning("The clan already exists.")
             await ctx.send("公会已存在")
 
-    @commands.command(name="入会")
+    @commands.command(name="join-clan", aliases=("入会", ))
     @commands.guild_only()
     async def join_clan(self, ctx: commands.Context):
-        """Joins the clan.
-
-        Args:
-            ctx: A command context.
-        """
+        """加入公会。"""
 
         logger.info(f"{ctx.author} is trying to join the clan.")
 
@@ -93,11 +85,7 @@ class PCRClanBattles(commands.Cog):
     @commands.command(name="list-members", aliases=("查看成员", ))
     @commands.guild_only()
     async def list_members(self, ctx: commands.Context):
-        """Lists the clan members.
-
-        Args:
-            ctx: A command context.
-        """
+        """查看公会成员。"""
 
         logger.info(f"{ctx.author} wants to list all members of the clan.")
 

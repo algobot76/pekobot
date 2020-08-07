@@ -34,7 +34,7 @@ async def fetch_news(
         return articles
 
 
-class PCRNews(commands.Cog):
+class PCRNews(commands.Cog, name="PCR新闻插件"):
     """The PCR news cog.
 
     Attributes:
@@ -45,11 +45,7 @@ class PCRNews(commands.Cog):
 
     @commands.command(name="news", aliases=("新闻", ))
     async def get_news(self, ctx: commands.Context):
-        """Gets the news from the official website.
-
-        Args:
-            ctx: A command context.
-        """
+        """查看官方新闻。"""
 
         author = ctx.author
         logger.info(f"{author} is requesting PCR news.")

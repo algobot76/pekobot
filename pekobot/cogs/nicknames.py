@@ -7,7 +7,7 @@ from discord.ext import commands
 NICKNAMES_FILE_PATH = os.path.join("pekobot", "cogs", "data", "nicknames.yaml")
 
 
-class Nicknames(commands.Cog):
+class Nicknames(commands.Cog, name="昵称插件"):
     """The Nicknames cog.
 
     Attributes:
@@ -21,6 +21,8 @@ class Nicknames(commands.Cog):
 
     @commands.command(name="whois", aliases=("谁是", ))
     async def whois(self, ctx, nickname):
+        """通过昵称查找角色。"""
+
         for k, v in self.data.items():
             if nickname in v["nicknames"]:
                 await ctx.send(
