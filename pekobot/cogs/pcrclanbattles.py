@@ -37,7 +37,7 @@ class PCRClanBattles(commands.Cog, name="PCR公会战插件"):
     async def create_clan(self, ctx: commands.Context):
         """创建公会。"""
 
-        logger.info(f"Creating a clan for the guild {ctx.guild}.")
+        logger.info("Creating a clan for the guild {guild}.", guild=ctx.guild)
         if not db.table_exists(self.pcb_db, CLAN_MEMBER_TABLE):
             cursor = self.pcb_db.cursor()
             cursor.execute(CREATE_CLAN_MEMBER_TABLE)
@@ -52,7 +52,7 @@ class PCRClanBattles(commands.Cog, name="PCR公会战插件"):
     async def join_clan(self, ctx: commands.Context):
         """加入公会。"""
 
-        logger.info(f"{ctx.author} is trying to join the clan.")
+        logger.info("{member} is trying to join the clan.", member=ctx.author)
 
         if not db.table_exists(self.pcb_db, CLAN_MEMBER_TABLE):
             logger.error("The clan has not been created yet.")
@@ -66,7 +66,8 @@ class PCRClanBattles(commands.Cog, name="PCR公会战插件"):
             '''
             cursor.execute(check_member)
             if cursor.fetchone()[0] != 0:
-                logger.warning(f"{author} is already in the clan.")
+                logger.warning("{member} is already in the clan.",
+                               author=author)
                 await ctx.send("你已是公会成员")
                 return
 
@@ -75,11 +76,13 @@ class PCRClanBattles(commands.Cog, name="PCR公会战插件"):
             VALUES ({author.id}, '{author}');
             '''
             logger.info(
-                f"Inserting (member_id: {author.id}, member_name: '{author}') into {CLAN_MEMBER_TABLE}."
-            )
+                "Inserting (member_id: {id}, member_name: '{name}') into {table}.",
+                id=author.id,
+                member=author,
+                table=CLAN_MEMBER_TABLE)
             cursor.execute(add_member)
             self.pcb_db.commit()
-            logger.info(f"{author} has joined the clan.")
+            logger.info("{member} has joined the clan.", member=author)
             await ctx.send("入会成功")
 
     @commands.command(name="list-members", aliases=("查看成员", ))
@@ -87,7 +90,8 @@ class PCRClanBattles(commands.Cog, name="PCR公会战插件"):
     async def list_members(self, ctx: commands.Context):
         """查看公会成员。"""
 
-        logger.info(f"{ctx.author} wants to list all members of the clan.")
+        logger.info("{member} wants to list all members of the clan.",
+                    member=ctx.author)
 
         cursor = self.pcb_db.cursor()
         if not db.table_exists(self.pcb_db, CLAN_MEMBER_TABLE):

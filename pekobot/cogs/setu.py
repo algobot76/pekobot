@@ -28,7 +28,7 @@ class Setu(commands.Cog, name="色图插件"):
         """来一份色图。"""
 
         author = ctx.author
-        logger.info(f"{author} is requesting a setu.")
+        logger.info("{member} is requesting a setu.", member=author)
         setu_images = os.listdir(SETU_PATH)
         selected_image = random.choice(setu_images)
         await ctx.send(file=File(os.path.join(SETU_PATH, selected_image)))

@@ -23,7 +23,7 @@ class Nicknames(commands.Cog, name="昵称插件"):
     async def whois(self, ctx, nickname):
         """通过昵称查找角色。"""
 
-        for k, v in self.data.items():
+        for _, v in self.data.items():
             if nickname in v["nicknames"]:
                 await ctx.send(
                     f"{v['cn_name']} (繁：{v['tc_name']}，日：{v['jp_name']})")
