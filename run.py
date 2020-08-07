@@ -10,11 +10,20 @@ from pekobot.bot import Bot
 from pekobot.utils import config
 from pekobot.utils import db
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S')
+# Setup logging
 logger = logging.getLogger('pekobot')
+logger.setLevel(logging.INFO)
+stream_handler = logging.StreamHandler()
+file_handler = logging.FileHandler(filename='pekobot.log',
+                                   encoding='utf-8',
+                                   mode='w')
+formatter = logging.Formatter('[{asctime}] [{levelname}] {name}: {message}',
+                              '%Y-%m-%d %H:%M:%S',
+                              style='{')
+stream_handler.setFormatter(formatter)
+file_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
+logger.addHandler(file_handler)
 
 conf = config.load_config()
 
