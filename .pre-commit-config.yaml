@@ -3,7 +3,10 @@ repos:
     rev: v0.30.0
     hooks:
       - id: yapf
-  - repo: https://github.com/pre-commit/mirrors-pylint
-    rev: v2.5.3
+  - repo: local
     hooks:
       - id: pylint
+        name: pylint
+        entry: pylint
+        language: system
+        types: [python]

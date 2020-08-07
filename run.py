@@ -43,10 +43,11 @@ async def run():
     bot = Bot(command_prefix=("!", "！"), pcr_db=pcr_db)
     for cog in conf["cogs"]:
         bot.load_extension(f"pekobot.cogs.{cog}")
+        logger.info("%s has been loaded.", cog)
 
     @bot.event
     async def on_ready():
-        logger.info(f'{bot.user} has connected to Discord!')
+        logger.info('%s has connected to Discord!', bot.user)
 
     try:
         await bot.start(conf['discord_token'])

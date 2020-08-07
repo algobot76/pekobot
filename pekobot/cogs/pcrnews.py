@@ -48,9 +48,9 @@ class PCRNews(commands.Cog, name="PCR新闻插件"):
         """查看官方新闻。"""
 
         author = ctx.author
-        logger.info("{member} is requesting PCR news.", member=author)
+        logger.info("%s is requesting PCR news.", author)
         articles = await fetch_news(self.bot.session)
-        logger.info("Fetched {n} articles.", n=len(articles))
+        logger.info("Fetched %d articles.", len(articles))
         if not articles:
             await ctx.send("找不到官方新闻(｡╯︵╰｡)	")
         for link, _, _ in articles:

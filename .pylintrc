@@ -141,7 +141,8 @@ disable=print-statement,
         comprehension-escape,
         invalid-name,
         too-many-locals,
-        fixme
+        fixme,
+        too-few-public-methods
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -191,7 +192,7 @@ never-returning-functions=sys.exit
 
 # The type of string formatting that logging methods do. `old` means using %
 # formatting, `new` is for `{}` formatting.
-logging-format-style=new
+logging-format-style=old
 
 # Logging modules to check that the string format arguments are in logging
 # function parameter format.
