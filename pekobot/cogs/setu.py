@@ -7,7 +7,6 @@ from discord import File
 from discord.ext import commands
 
 from pekobot.bot import Bot
-from pekobot.utils import checks
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +23,7 @@ class Setu(commands.Cog, name="色图插件"):
         self.bot = bot
 
     @commands.command(name="setu", aliases=("色图", "涩图"))
-    @checks.is_nsfw()
+    @commands.is_nsfw()
     async def send_setu(self, ctx: commands.Context):
         """来一份色图。"""
 

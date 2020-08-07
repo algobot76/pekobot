@@ -65,6 +65,13 @@ class Peko(commands.Cog, name="佩可插件"):
         if isinstance(error, commands.CommandNotFound):
             await ctx.send("老娘不认识的指令呢～～")
             return
+        if isinstance(error, commands.NSFWChannelRequired):
+            await ctx.send("你在想啥呢？变态ヽ(`⌒´メ)ノ")
+            return
+        if isinstance(error, commands.MissingPermissions):
+            if "administrator" in error.missing_perms:
+                await ctx.send("此功能只对管理员开放")
+                return
         raise error
 
     @commands.Cog.listener()

@@ -4,7 +4,7 @@ import logging
 from discord.ext import commands
 
 from pekobot.bot import Bot
-from pekobot.utils import checks, db
+from pekobot.utils import db
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class PCRClanBattles(commands.Cog, name="PCR公会战插件"):
 
     @commands.command(name="create-clan", aliases=("建会", ))
     @commands.guild_only()
-    @checks.is_admin()
+    @commands.has_permissions(administrator=True)
     async def create_clan(self, ctx: commands.Context):
         """创建公会。"""
 
