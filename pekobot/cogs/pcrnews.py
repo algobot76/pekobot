@@ -1,5 +1,8 @@
+"""PCR news cog"""
 import logging
+from typing import List, Tuple
 
+import aiohttp
 from bs4 import BeautifulSoup
 from discord.ext import commands
 
@@ -8,7 +11,17 @@ from pekobot.bot import Bot
 logger = logging.getLogger(__name__)
 
 
-async def fetch_news(session):
+async def fetch_news(
+        session: aiohttp.ClientSession) -> List[Tuple[str, str, str]]:
+    """Fetches news from https://priconne-redive.jp/news.
+
+    Args:
+        session: A client session of aiohttp.
+
+    Returns:
+        A list of articles.
+    """
+
     async with session.get("https://priconne-redive.jp/news/") as resp:
         articles = []
         soup = BeautifulSoup(await resp.text(), 'html.parser')
@@ -22,11 +35,22 @@ async def fetch_news(session):
 
 
 class PCRNews(commands.Cog):
+    """The PCR news cog.
+
+    Attributes:
+        bot: A Pekobot instance.
+    """
     def __init__(self, bot: Bot):
         self.bot = bot
 
     @commands.command(name="news", aliases=("新闻", ))
     async def get_news(self, ctx: commands.Context):
+        """Gets the news from the official website.
+
+        Args:
+            ctx: A command context.
+        """
+
         author = ctx.author
         logger.info(f"{author} is requesting PCR news.")
         articles = await fetch_news(self.bot.session)
@@ -38,4 +62,6 @@ class PCRNews(commands.Cog):
 
 
 def setup(bot: Bot):
+    """A helper function used to load the cog."""
+
     bot.add_cog(PCRNews(bot))
