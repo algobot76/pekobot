@@ -1,3 +1,4 @@
+# pylint: skip-file
 from discord.ext import commands
 from pixivpy3 import AppPixivAPI
 
