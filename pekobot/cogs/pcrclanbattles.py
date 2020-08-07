@@ -3,7 +3,7 @@ import logging
 
 from discord.ext import commands
 
-from pekobot.bot import Bot
+from pekobot.pekobot import Pekobot
 from pekobot.utils import db
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ class PCRClanBattles(commands.Cog, name="PCR公会战插件"):
         bot: A pekobot instance.
         pcb_cb: A DB connection to PCB.
     """
-    def __init__(self, bot: Bot):
+    def __init__(self, bot: Pekobot):
         self.bot = bot
         self.pcb_db = db.create_connection(DB_NAME)  # PCB = PCR Clan Battles
 

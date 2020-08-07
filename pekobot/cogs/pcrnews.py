@@ -6,7 +6,7 @@ import aiohttp
 from bs4 import BeautifulSoup
 from discord.ext import commands
 
-from pekobot.bot import Bot
+from pekobot.pekobot import Pekobot
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ class PCRNews(commands.Cog, name="PCR新闻插件"):
     Attributes:
         bot: A Pekobot instance.
     """
-    def __init__(self, bot: Bot):
+    def __init__(self, bot: Pekobot):
         self.bot = bot
 
     @commands.command(name="news", aliases=("新闻", ))
@@ -57,7 +57,7 @@ class PCRNews(commands.Cog, name="PCR新闻插件"):
             await ctx.send(link)
 
 
-def setup(bot: Bot):
+def setup(bot: Pekobot):
     """A helper function used to load the cog."""
 
     bot.add_cog(PCRNews(bot))
