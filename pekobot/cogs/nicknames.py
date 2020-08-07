@@ -1,3 +1,4 @@
+"""Nicknames cog"""
 import os
 
 import yaml
@@ -7,12 +8,18 @@ NICKNAMES_FILE_PATH = os.path.join("pekobot", "cogs", "data", "nicknames.yaml")
 
 
 class Nicknames(commands.Cog):
+    """The Nicknames cog.
+
+    Attributes:
+        bot: A Pekobot instance.
+        data: Data of nicknames.
+    """
     def __init__(self, bot):
         self.bot = bot
         with open(NICKNAMES_FILE_PATH, "r") as f:
             self.data = yaml.load(f, Loader=yaml.FullLoader)
 
-    @commands.command(name="谁是")
+    @commands.command(name="whois", aliases=("谁是", ))
     async def whois(self, ctx, nickname):
         for k, v in self.data.items():
             if nickname in v["nicknames"]:
@@ -23,4 +30,6 @@ class Nicknames(commands.Cog):
 
 
 def setup(bot):
+    """A helper function used to load the Nicknames cog."""
+
     bot.add_cog(Nicknames(bot))
