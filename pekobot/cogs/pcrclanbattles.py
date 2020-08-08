@@ -10,6 +10,10 @@ from pekobot.utils import db
 logger = logging.getLogger(__name__)
 
 CLAN_MEMBER_TABLE = "clan_member"
+DELETE_MEMBER_FROM_CLAN = f'''
+DELETE FROM {CLAN_MEMBER_TABLE}
+WHERE member_id=%d;
+'''
 
 
 class PCRClanBattles(commands.Cog, name="PCR公会战插件"):
@@ -86,6 +90,35 @@ class PCRClanBattles(commands.Cog, name="PCR公会战插件"):
                 conn.commit()
                 logger.info("%s has joined the clan %s.", author, ctx.guild)
                 await ctx.send("入会成功")
+
+    @commands.command(name="leave-clan", aliases=("退会", ))
+    @commands.guild_only()
+    async def leave_clan(self, ctx: commands.Context):
+        """退出公会。"""
+
+        logger.info("%s (%s) is leaving the clan.", ctx.author, ctx.guild)
+        with sqlite3.connect(self._get_db_name(ctx)) as conn:
+            if not db.table_exists(conn, CLAN_MEMBER_TABLE):
+                logger.error("The clan %s has not been created yet.",
+                             ctx.guild)
+                await ctx.send("公会尚未建立")
+            else:
+                cursor = conn.cursor()
+                author = ctx.author
+                check_member = f'''
+                       SELECT COUNT(*) FROM clan_member
+                       WHERE member_id={author.id};
+                       '''
+                cursor.execute(check_member)
+                if cursor.fetchone()[0] == 0:
+                    logger.warning("%s is not in the clan %s.", author,
+                                   ctx.guild)
+                    await ctx.send("你还不是公会成员")
+                    return
+                cursor.execute(DELETE_MEMBER_FROM_CLAN % author.id)
+                conn.commit()
+                logger.info("%s has left the clan %s.", author, ctx.guild)
+                await ctx.send("退会成功")
 
     @commands.command(name="list-members", aliases=("查看成员", ))
     @commands.guild_only()
