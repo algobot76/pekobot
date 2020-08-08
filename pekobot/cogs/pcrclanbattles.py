@@ -69,9 +69,14 @@ class PCRClanBattles(commands.Cog, name="PCR公会战插件"):
                     await ctx.send("你已是公会成员")
                     return
 
+                if author.nick:
+                    nick = author.nick
+                else:
+                    nick = ""
+
                 add_member = f'''
                 INSERT INTO clan_member (member_id, member_name, member_nick)
-                VALUES ({author.id}, '{author}', '{author.nick}');
+                VALUES ({author.id}, '{author}', '{nick}');
                 '''
                 logger.info(
                     "Inserting (member_id: %d, member_name: '%s') into %s.",
@@ -94,14 +99,20 @@ class PCRClanBattles(commands.Cog, name="PCR公会战插件"):
                 await ctx.send("公会尚未建立")
             else:
                 list_members = '''
-                SELECT member_nick FROM clan_member;
+                SELECT member_name, member_nick FROM clan_member;
                 '''
                 cursor.execute(list_members)
-                names = [name for name, in cursor.fetchall()]
-                if not names:
+                display_names = []
+                for name, nick in cursor.fetchall():
+                    print(f"{name}: {type(nick)}")
+                    if not nick:
+                        display_names.append(name)
+                    else:
+                        display_names.append(nick)
+                if not display_names:
                     await ctx.send("暂无成员入会")
                     return
-                report = '\n'.join(names)
+                report = '\n'.join(display_names)
                 await ctx.send(report)
 
     @staticmethod
