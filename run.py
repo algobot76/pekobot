@@ -2,13 +2,13 @@
 import asyncio
 import logging
 import os
+import sqlite3
 
 import aiohttp
 import brotli
 
 from pekobot.pekobot import Pekobot
 from pekobot.utils import config
-from pekobot.utils import db
 
 # Setup logging
 logger = logging.getLogger('pekobot')
@@ -39,7 +39,7 @@ async def run():
                 with open("redive_jp.db", "wb") as f:
                     f.write(data)
 
-    pcr_db = db.create_connection("redive_jp.db")
+    pcr_db = sqlite3.connect("redive_jp.db")
     bot = Pekobot(command_prefix=("!", "！"), pcr_db=pcr_db)
     for cog in conf["cogs"]:
         bot.load_extension(f"pekobot.cogs.{cog}")
