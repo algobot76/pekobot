@@ -8,13 +8,20 @@ from discord.ext import commands
 
 from pekobot.pekobot import Pekobot
 
+logger = logging.getLogger(__name__)
+
 NYB_TEXT = '''
 正在播放：New Year Burst
 ──●━━━━ 1:05/1:30
 ⇆ ㅤ◁ ㅤㅤ❚❚ ㅤㅤ▷ ㅤ↻
 '''
 
-logger = logging.getLogger(__name__)
+STATUS_REPORT_FORMAT = '''
+状态报告
+
+服务器ID: {id}
+目前涩图数量：{num_setu}
+'''
 
 
 class Peko(commands.Cog, name="佩可插件"):
@@ -100,11 +107,10 @@ class Peko(commands.Cog, name="佩可插件"):
         """查看机器人状态。"""
 
         logger.info("Pekobot's status has been queried by %s.", ctx.author)
+        guild_id = ctx.guild.id
         setu_dir = os.path.join("images", "setu")
         setu_count = count_files(setu_dir)
-        setu_status = f"目前涩图数量：{setu_count}\n"
-        header = "状态报告\n\n"
-        report = header + setu_status
+        report = STATUS_REPORT_FORMAT.format(id=guild_id, num_setu=setu_count)
         await ctx.send(report)
 
 
