@@ -7,7 +7,7 @@ import sqlite3
 import aiohttp
 import brotli
 
-from pekobot.pekobot import Pekobot
+from pekobot.bot import Pekobot
 from pekobot.utils import config
 
 # Setup logging

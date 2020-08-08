@@ -4,7 +4,7 @@ import sqlite3
 
 from discord.ext import commands
 
-from pekobot.pekobot import Pekobot
+from pekobot.bot import Pekobot
 from pekobot.utils import db
 
 logger = logging.getLogger(__name__)
