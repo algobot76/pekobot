@@ -6,7 +6,7 @@ import aiohttp
 from bs4 import BeautifulSoup
 from discord.ext import commands
 
-from pekobot.pekobot import Pekobot
+from pekobot.bot import Pekobot
 
 logger = logging.getLogger(__name__)
 

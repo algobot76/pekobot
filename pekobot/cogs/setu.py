@@ -6,7 +6,7 @@ import random
 from discord import File
 from discord.ext import commands
 
-from pekobot.pekobot import Pekobot
+from pekobot.bot import Pekobot
 
 logger = logging.getLogger(__name__)
 
