@@ -35,7 +35,8 @@ class PCRClanBattles(commands.Cog, name="PCR公会战插件"):
                 create_table = f'''
                 CREATE TABLE {self.CLAN_MEMBER_TABLE} (
                     member_id INTEGER PRIMARY KEY,
-                    member_name TEXT
+                    member_name TEXT,
+                    member_nick TEXT
                 )
                 '''
                 cursor.execute(create_table)
@@ -69,8 +70,8 @@ class PCRClanBattles(commands.Cog, name="PCR公会战插件"):
                     return
 
                 add_member = f'''
-                INSERT INTO clan_member (member_id, member_name)
-                VALUES ({author.id}, '{author}');
+                INSERT INTO clan_member (member_id, member_name, member_nick)
+                VALUES ({author.id}, '{author}', '{author.nick}');
                 '''
                 logger.info(
                     "Inserting (member_id: %d, member_name: '%s') into %s.",
@@ -93,7 +94,7 @@ class PCRClanBattles(commands.Cog, name="PCR公会战插件"):
                 await ctx.send("公会尚未建立")
             else:
                 list_members = '''
-                SELECT member_name FROM clan_member;
+                SELECT member_nick FROM clan_member;
                 '''
                 cursor.execute(list_members)
                 names = [name for name, in cursor.fetchall()]
