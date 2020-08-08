@@ -2,20 +2,6 @@
 import sqlite3
 
 
-def create_connection(db_path):
-    """Connects to a SQLite DB.
-
-    Args:
-        db_path: A file path to a SQLite DB.
-
-    Returns:
-        A DB connection.
-    """
-
-    conn = sqlite3.connect(db_path)
-    return conn
-
-
 def table_exists(conn: sqlite3.Connection, table_name: str) -> bool:
     """Checks if a table exists.
 
