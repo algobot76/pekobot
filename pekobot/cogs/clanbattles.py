@@ -1,4 +1,4 @@
-"""PCR clan battles cog"""
+"""Clan battles cog"""
 import logging
 import sqlite3
 
@@ -16,8 +16,8 @@ WHERE member_id=%d;
 '''
 
 
-class PCRClanBattles(commands.Cog, name="PCR公会战插件"):
-    """The PCR clan battles cog.
+class ClanBattles(commands.Cog, name="PCR公会战插件"):
+    """The clan battles cog.
 
     Attributes:
         bot: A pekobot instance.
@@ -165,4 +165,4 @@ class PCRClanBattles(commands.Cog, name="PCR公会战插件"):
 def setup(bot):
     """A helper function used to load the cog."""
 
-    bot.add_cog(PCRClanBattles(bot))
+    bot.add_cog(ClanBattles(bot))
