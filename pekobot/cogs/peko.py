@@ -4,6 +4,7 @@ import os
 import random
 
 import discord
+import yaml
 from discord.ext import commands
 
 from pekobot.bot import Pekobot
@@ -23,29 +24,22 @@ STATUS_REPORT_FORMAT = '''
 目前涩图数量：{num_setu}
 '''
 
+PEKO_COMMENTS_FILE = os.path.join("pekobot", "cogs", "data",
+                                  "peko_comments.yaml")
+
 
 class Peko(commands.Cog, name="佩可插件"):
     """The Peko cog.
 
     Attributes:
         bot: A Pekobot instance.
-        comments: A list of comments by ペコリーヌ.
+        comments: A list of comments by Pecorine.
     """
     def __init__(self, bot):
         self.bot = bot
-
-        PEKO_ID = 105801  # 105801 is the unit id of ペコリーヌ
-        query = f'''
-        SELECT description FROM unit_comments
-        WHERE unit_id={PEKO_ID}
-        '''
-        conn = self.bot.g.get("pcr_db")
-        cursor = conn.cursor()
-        cursor.execute(query)
-        self.comments = []
-        for comment, in cursor.fetchall():
-            comment = comment.replace("\\n", "")
-            self.comments.append(comment)
+        with open(PEKO_COMMENTS_FILE, "r") as f:
+            data = yaml.load(f, Loader=yaml.FullLoader)
+        self.comments = data.get("comments", [])
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
