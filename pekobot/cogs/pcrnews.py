@@ -3,6 +3,7 @@ import logging
 from typing import List, Tuple
 
 import aiohttp
+import discord
 from bs4 import BeautifulSoup
 from discord.ext import commands
 
@@ -53,8 +54,19 @@ class PCRNews(commands.Cog, name="PCR新闻插件"):
         logger.info("Fetched %d articles.", len(articles))
         if not articles:
             await ctx.send("找不到官方新闻(｡╯︵╰｡)	")
-        for link, _, _ in articles:
-            await ctx.send(link)
+            return
+        description = self._get_description(articles)
+        embed = discord.Embed(title="官方新闻", description=description)
+        await ctx.send(embed=embed)
+
+    @staticmethod
+    def _get_description(articles: List[Tuple[str, str, str]]) -> str:
+        result = '=======\n'
+        for link, title, _ in articles:
+            result += f"{title}\n"
+            result += f"链接：{link}\n"
+            result += "-------\n"
+        return result
 
 
 def setup(bot: Pekobot):
