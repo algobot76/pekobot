@@ -35,7 +35,7 @@ async def fetch_news(
         return articles
 
 
-class News(commands.Cog, name="PCR新闻插件"):
+class News(commands.Cog, name="新闻插件"):
     """The news cog.
 
     Attributes:
@@ -49,7 +49,7 @@ class News(commands.Cog, name="PCR新闻插件"):
         """查看官方新闻。"""
 
         author = ctx.author
-        logger.info("%s is requesting PCR news.", author)
+        logger.info("%s is requesting news.", author)
         articles = await fetch_news(self.bot.session)
         logger.info("Fetched %d articles.", len(articles))
         if not articles:
