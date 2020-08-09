@@ -140,7 +140,6 @@ class PCRClanBattles(commands.Cog, name="PCR公会战插件"):
                 cursor.execute(list_members)
                 display_names = []
                 for name, nick in cursor.fetchall():
-                    print(f"{name}: {type(nick)}")
                     if not nick:
                         display_names.append(name)
                     else:
