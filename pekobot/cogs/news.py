@@ -1,4 +1,4 @@
-"""PCR news cog"""
+"""News cog"""
 import logging
 from typing import List, Tuple
 
@@ -35,8 +35,8 @@ async def fetch_news(
         return articles
 
 
-class PCRNews(commands.Cog, name="PCR新闻插件"):
-    """The PCR news cog.
+class News(commands.Cog, name="PCR新闻插件"):
+    """The news cog.
 
     Attributes:
         bot: A Pekobot instance.
@@ -72,4 +72,4 @@ class PCRNews(commands.Cog, name="PCR新闻插件"):
 def setup(bot: Pekobot):
     """A helper function used to load the cog."""
 
-    bot.add_cog(PCRNews(bot))
+    bot.add_cog(News(bot))
