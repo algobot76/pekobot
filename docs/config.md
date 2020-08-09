@@ -7,8 +7,8 @@ discord_token：
 cogs:
   - nicknames
   - gacha
-  - pcrclanbattles
-  - pcrnews
+  - clanbattles
+  - news
   - peko
   - setu
 ```

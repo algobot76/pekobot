@@ -16,7 +16,7 @@ WHERE member_id=%d;
 '''
 
 
-class ClanBattles(commands.Cog, name="PCR公会战插件"):
+class ClanBattles(commands.Cog, name="公会战插件"):
     """The clan battles cog.
 
     Attributes:
@@ -159,7 +159,7 @@ class ClanBattles(commands.Cog, name="PCR公会战插件"):
         """
 
         guild_id = ctx.guild.id
-        return f"pcrclanbattles-{guild_id}.db"
+        return f"clanbattles-{guild_id}.db"
 
 
 def setup(bot):
