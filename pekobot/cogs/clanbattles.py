@@ -255,7 +255,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         db_file = self._get_db_name(ctx)
         if os.path.exists(db_file):
-            await user.send(file=discord.File(self._get_db_name(ctx)))
+            await user.send(file=discord.File(db_file))
         else:
             await user.send("数据不存在")
 
