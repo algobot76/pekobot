@@ -16,5 +16,3 @@ class Pekobot(commands.Bot):
 
         self.g = dict()  # inspired by flask.g
         self.g["pcr_db"] = kwargs.pop("pcr_db")
-
-        self.remove_command("help")
