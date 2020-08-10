@@ -1,9 +1,11 @@
 """Clan battles cog"""
 import datetime
 import logging
+import os
 import shelve
 import sqlite3
 
+import discord
 from discord.ext import commands
 
 from pekobot.bot import Pekobot
@@ -241,6 +243,21 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             except KeyError:
                 logger.warning("Current clan battle does not exists.")
                 await ctx.send("目前无进行中的公会战")
+
+    @commands.command(name="export-data", aliases=("导出数据", ))
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
+    async def export_data(self, ctx: commands.Context):
+        """导出公会战数据。"""
+
+        id_ = ctx.author.id
+        user = self.bot.get_user(id_)
+
+        db_file = self._get_db_name(ctx)
+        if os.path.exists(db_file):
+            await user.send(file=discord.File(self._get_db_name(ctx)))
+        else:
+            await user.send("数据不存在")
 
     @staticmethod
     def _get_db_name(ctx: commands.Context) -> str:
