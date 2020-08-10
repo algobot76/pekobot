@@ -1,5 +1,7 @@
 """Clan battles cog"""
+import datetime
 import logging
+import shelve
 import sqlite3
 
 from discord.ext import commands
@@ -9,11 +11,33 @@ from pekobot.utils import db
 
 logger = logging.getLogger(__name__)
 
+META_FILE_PATH = "clanbattles-meta.db"
+
 CLAN_MEMBER_TABLE = "clan_member"
 DELETE_MEMBER_FROM_CLAN = f'''
 DELETE FROM {CLAN_MEMBER_TABLE}
 WHERE member_id=%d;
 '''
+
+CLAN_BATTLE_TABLE = "clan_battle"
+CREATE_CLAN_BATTLE_TABLE = f"""
+CREATE TABLE IF NOT EXISTS {CLAN_BATTLE_TABLE} (
+    date TEXT PRIMARY KEY,
+    name TEXt
+)
+"""
+CREATE_NEW_CLAN_BATTLE = f"""
+INSERT INTO {CLAN_BATTLE_TABLE} (date, name)
+VALUES ('%s', '%s');
+"""
+COUNT_CLAN_BATTLE = f"""
+SELECT COUNT(*) from {CLAN_BATTLE_TABLE}
+WHERE date='%s';
+"""
+GET_CLAN_BATTLE_BY_DATE = f"""
+SELECT date, name FROM {CLAN_BATTLE_TABLE}
+WHERE date='%s'
+"""
 
 
 class ClanBattles(commands.Cog, name="公会战插件"):
@@ -150,16 +174,105 @@ class ClanBattles(commands.Cog, name="公会战插件"):
                 report = '\n'.join(display_names)
                 await ctx.send(report)
 
+    @commands.command(name="start-clan-battle", aliases=("开始会战", ))
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
+    async def start_clan_battle(self, ctx: commands.Context, date="", name=""):
+        """开始会战"""
+
+        logger.info("%s (%s) is creating a new clan battle.", ctx.author,
+                    ctx.guild)
+
+        # validation on date
+        if not date:
+            logger.error("Empty date.")
+            await ctx.send("请输入公会战日期")
+            return
+        try:
+            datetime.datetime.strptime(date, '%Y-%m-%d')
+        except ValueError:
+            logger.error("Invalid date: %s", date)
+            await ctx.send("请输入合法日期（YYYY-MM-DD）")
+            return
+
+        with sqlite3.connect(self._get_db_name(ctx)) as conn:
+            cursor = conn.cursor()
+            cursor.execute(CREATE_CLAN_BATTLE_TABLE)
+
+            cursor.execute(COUNT_CLAN_BATTLE % date)
+            if cursor.fetchone()[0] != 0:
+                logger.warning("Clan battle with date=%s already exists.",
+                               date)
+                await ctx.send("公会战已存在")
+                return
+
+            logger.info("Creating a new clan battle with date=%s and name=%s.",
+                        date, name)
+            cursor.execute(CREATE_NEW_CLAN_BATTLE % (date, name))
+            await ctx.send("成功创建公会战")
+
+            # Set this clan battle as the current clan battle.
+            with shelve.open(META_FILE_PATH, writeback=True) as s:
+                guid_id = str(ctx.guild.id)
+                s[guid_id] = {
+                    "current_battle_date": date,
+                    "current_battle_name": name
+                }
+                logger.info("Current clan battle has been updated.")
+
+    @commands.command(name="current-clan-battle", aliases=("当前会战", ))
+    @commands.guild_only()
+    async def show_current_clan_battle(self, ctx: commands.Context):
+        """显示目前进行中公会战。"""
+
+        logger.info("%s (%s) is requesting the current clan battle.",
+                    ctx.author, ctx.guild)
+        with shelve.open(META_FILE_PATH) as s:
+            guild_id = str(ctx.guild.id)
+            try:
+                date = s[guild_id]["current_battle_date"]
+                name = s[guild_id]["current_battle_name"]
+                if name:
+                    logger.info("Current clan battle: %s (%s)", date, name)
+                    await ctx.send(f"当前公会战：{date} ({name})")
+                else:
+                    logger.info("Current clan battle: %s", date)
+                    await ctx.send(f"当前公会战：{date}")
+            except KeyError:
+                logger.warning("Current clan battle does not exists.")
+                await ctx.send("目前无进行中的公会战")
+
     @staticmethod
     def _get_db_name(ctx: commands.Context) -> str:
         """Generates the DB name for a given guild.
 
         Args:
             ctx: A command context
+
+        Returns:
+            A table name.
         """
 
         guild_id = ctx.guild.id
         return f"clanbattles-{guild_id}.db"
+
+    @staticmethod
+    def _get_current_clan_battle(ctx: commands.Context) -> str:
+        """Gets the current clan battle from the meta file.
+
+        Args:
+            ctx: A command context.
+
+        Returns:
+            The date of the current clan battle.
+        """
+
+        guild_id = str(ctx.guild.id)
+        with shelve.open(META_FILE_PATH) as s:
+            try:
+                return s[guild_id]["current_battle"]
+            except KeyError:
+                return ""
 
 
 def setup(bot):
