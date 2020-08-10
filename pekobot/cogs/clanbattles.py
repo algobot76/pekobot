@@ -219,6 +219,9 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         Args:
             ctx: A command context
+
+        Returns:
+            A table name.
         """
 
         guild_id = ctx.guild.id
