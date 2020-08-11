@@ -206,6 +206,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             return
 
         cursor.execute(CREATE_NEW_CLAN_BATTLE % (date, name))
+        conn.commit()
         logger.info("The clan battle %s (%s) has been created.", date, name)
         await ctx.send("成功创建公会战")
 
