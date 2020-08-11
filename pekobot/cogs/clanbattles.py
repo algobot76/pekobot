@@ -43,6 +43,10 @@ WHERE date='%s'
 GET_ALL_CLAN_BATTLES = f"""
 SELECT date, name FROM {CLAN_BATTLE_TABLE};
 """
+DELETE_CLAN_BATTLE_BY_DATE = f"""
+DELETE FROM {CLAN_BATTLE_TABLE}
+WHERE date='%s';
+"""
 
 
 class ClanBattles(commands.Cog, name="公会战插件"):
@@ -187,17 +191,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         logger.info("%s (%s) is creating a new clan battle.", ctx.author,
                     ctx.guild)
-
-        # validation on date
-        if not date:
-            logger.error("Empty date.")
-            await ctx.send("请输入公会战日期")
-            return
-        try:
-            datetime.datetime.strptime(date, '%Y-%m-%d')
-        except ValueError:
-            logger.error("Invalid date: %s", date)
-            await ctx.send("请输入合法日期（YYYY-MM-DD）")
+        if not await self._check_date(ctx, date):
             return
 
         with sqlite3.connect(self._get_db_name(ctx)) as conn:
@@ -273,6 +267,39 @@ class ClanBattles(commands.Cog, name="公会战插件"):
                 report += "-------\n"
             await ctx.send(report)
 
+    @commands.command(name="delete-clan-battle", aliases=("删除会战", ))
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
+    async def delete_clan_battle(self, ctx: commands.Context, date=""):
+        """删除公会战数据。"""
+
+        logger.info("%s (%s) is deleting a clan battle.", ctx.author,
+                    ctx.guild)
+        if not await self._check_date(ctx, date):
+            return
+
+        logger.info("The clan battle %s will be deleted.", date)
+        with sqlite3.connect(self._get_db_name(ctx)) as conn:
+            cursor = conn.cursor()
+            cursor.execute(COUNT_CLAN_BATTLE % date)
+            if cursor.fetchone()[0] == 0:
+                logger.warning("The clan battle %s does not exist.", date)
+                await ctx.send("此公会战不存在")
+            else:
+                logger.info("The clan battle %s is being deleted.", date)
+                cursor.execute(DELETE_CLAN_BATTLE_BY_DATE % date)
+                conn.commit()
+                with shelve.open(META_FILE_PATH, writeback=True) as s:
+                    guild_id = str(ctx.guild.id)
+                    try:
+                        curr_date = s[guild_id]["current_battle_date"]
+                        if curr_date == date:
+                            s[guild_id]["current_battle_date"] = ""
+                            s[guild_id]["current_battle_name"] = ""
+                    except KeyError:
+                        pass
+                await ctx.send("公会战已删除")
+
     @commands.command(name="export-data", aliases=("导出数据", ))
     @commands.guild_only()
     @commands.has_permissions(administrator=True)
@@ -319,6 +346,30 @@ class ClanBattles(commands.Cog, name="公会战插件"):
                 return s[guild_id]["current_battle"]
             except KeyError:
                 return ""
+
+    @staticmethod
+    async def _check_date(ctx: commands.Context, date: str) -> bool:
+        """Validates a date.
+
+        Args:
+            ctx: A command context.
+            date: A date in YYYY-MM-DD format.
+
+        Returns:
+            A bool that indicates if the date is valid.
+        """
+
+        if not date:
+            logger.error("Empty date.")
+            await ctx.send("请输入公会战日期")
+            return False
+        try:
+            datetime.datetime.strptime(date, '%Y-%m-%d')
+        except ValueError:
+            logger.error("Invalid date: %s", date)
+            await ctx.send("请输入合法日期（YYYY-MM-DD）")
+            return False
+        return True
 
 
 def setup(bot):
