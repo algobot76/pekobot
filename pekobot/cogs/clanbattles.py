@@ -130,27 +130,22 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         """退出公会。"""
 
         logger.info("%s (%s) is leaving the clan.", ctx.author, ctx.guild)
-        with sqlite3.connect(self._get_db_file_name(ctx)) as conn:
-            if not db.table_exists(conn, CLAN_MEMBER_TABLE):
-                logger.error("The clan %s has not been created yet.",
-                             ctx.guild)
-                await ctx.send("公会尚未建立")
+        guild_id = ctx.guild.id
+        conn = self._get_db_connection(guild_id)
+        cursor = conn.cursor()
+
+        if not db.table_exists(conn, CLAN_MEMBER_TABLE):
+            logger.error("The clan %s has not been created yet.", ctx.guild)
+            await ctx.send("公会尚未建立")
+        else:
+            author = ctx.author
+            if not self._member_exists(conn, author.id):
+                logger.warning("%s is not in the clan yet.", author)
+                await ctx.send("你还不是公会成员")
             else:
-                cursor = conn.cursor()
-                author = ctx.author
-                check_member = f'''
-                       SELECT COUNT(*) FROM clan_member
-                       WHERE member_id={author.id};
-                       '''
-                cursor.execute(check_member)
-                if cursor.fetchone()[0] == 0:
-                    logger.warning("%s is not in the clan %s.", author,
-                                   ctx.guild)
-                    await ctx.send("你还不是公会成员")
-                    return
                 cursor.execute(DELETE_MEMBER_FROM_CLAN % author.id)
                 conn.commit()
-                logger.info("%s has left the clan %s.", author, ctx.guild)
+                logger.info("%s has left the clan.", author)
                 await ctx.send("退会成功")
 
     @commands.command(name="list-members", aliases=("查看成员", ))
