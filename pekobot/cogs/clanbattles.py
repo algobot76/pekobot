@@ -308,13 +308,16 @@ class ClanBattles(commands.Cog, name="公会战插件"):
     async def export_data(self, ctx: commands.Context):
         """导出公会战数据。"""
 
+        logger.info("%s (%s) is export data.", ctx.author, ctx.guild)
         id_ = ctx.author.id
         user = self.bot.get_user(id_)
 
         db_file = self._get_db_file_name(ctx)
         if os.path.exists(db_file):
             await user.send(file=discord.File(db_file))
+            logger.info("Data haS been exported.")
         else:
+            logger.warning("Data does not exist.")
             await user.send("数据不存在")
 
     def _get_db_connection(self, guild_id: int) -> sqlite3.Connection:
