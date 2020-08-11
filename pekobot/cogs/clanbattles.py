@@ -277,27 +277,30 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         if not await self._check_date(ctx, date):
             return
 
+        guild_id = ctx.guild.id
+        conn = self._get_db_connection(guild_id)
+        cursor = conn.cursor()
+
         logger.info("The clan battle %s will be deleted.", date)
-        with sqlite3.connect(self._get_db_file_name(ctx)) as conn:
-            cursor = conn.cursor()
-            cursor.execute(COUNT_CLAN_BATTLE % date)
-            if cursor.fetchone()[0] == 0:
-                logger.warning("The clan battle %s does not exist.", date)
-                await ctx.send("此公会战不存在")
-            else:
-                logger.info("The clan battle %s is being deleted.", date)
-                cursor.execute(DELETE_CLAN_BATTLE_BY_DATE % date)
-                conn.commit()
-                with shelve.open(META_FILE_PATH, writeback=True) as s:
-                    guild_id = str(ctx.guild.id)
-                    try:
-                        curr_date = s[guild_id]["current_battle_date"]
-                        if curr_date == date:
-                            s[guild_id]["current_battle_date"] = ""
-                            s[guild_id]["current_battle_name"] = ""
-                    except KeyError:
-                        pass
-                await ctx.send("公会战已删除")
+        if not self._clan_battle_exists(conn, date):
+            logger.warning("The clan battle %s does not exist.", date)
+            await ctx.send("此公会战不存在")
+        else:
+            cursor.execute(DELETE_CLAN_BATTLE_BY_DATE % date)
+            conn.commit()
+            logger.info("The clan battle %s has been deleted.", date)
+            await ctx.send("公会战已删除")
+
+            guild_id = str(guild_id)
+            try:
+                curr_date = self.meta[guild_id]["current_battle_date"]
+                if curr_date == date:
+                    self.meta[guild_id]["current_battle_date"] = ""
+                    self.meta[guild_id]["current_battle_name"] = ""
+                    logger.info("Current clan battle has been reset.")
+                    await ctx.send("正在进行中的会战已被重置")
+            except KeyError:
+                pass
 
     @commands.command(name="export-data", aliases=("导出数据", ))
     @commands.guild_only()
