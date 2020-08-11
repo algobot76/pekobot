@@ -187,17 +187,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         logger.info("%s (%s) is creating a new clan battle.", ctx.author,
                     ctx.guild)
-
-        # validation on date
-        if not date:
-            logger.error("Empty date.")
-            await ctx.send("请输入公会战日期")
-            return
-        try:
-            datetime.datetime.strptime(date, '%Y-%m-%d')
-        except ValueError:
-            logger.error("Invalid date: %s", date)
-            await ctx.send("请输入合法日期（YYYY-MM-DD）")
+        if not await self._check_date(ctx, date):
             return
 
         with sqlite3.connect(self._get_db_name(ctx)) as conn:
@@ -319,6 +309,30 @@ class ClanBattles(commands.Cog, name="公会战插件"):
                 return s[guild_id]["current_battle"]
             except KeyError:
                 return ""
+
+    @staticmethod
+    async def _check_date(ctx: commands.Context, date: str) -> bool:
+        """Validates a date.
+
+        Args:
+            ctx: A command context.
+            date: A date in YYYY-MM-DD format.
+
+        Returns:
+            A bool that indicates if the date is valid.
+        """
+
+        if not date:
+            logger.error("Empty date.")
+            await ctx.send("请输入公会战日期")
+            return False
+        try:
+            datetime.datetime.strptime(date, '%Y-%m-%d')
+        except ValueError:
+            logger.error("Invalid date: %s", date)
+            await ctx.send("请输入合法日期（YYYY-MM-DD）")
+            return False
+        return True
 
 
 def setup(bot):
