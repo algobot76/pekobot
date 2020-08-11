@@ -391,24 +391,6 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         return False
 
     @staticmethod
-    def _get_current_clan_battle(ctx: commands.Context) -> str:
-        """Gets the current clan battle from the meta file.
-
-        Args:
-            ctx: A command context.
-
-        Returns:
-            The date of the current clan battle.
-        """
-
-        guild_id = str(ctx.guild.id)
-        with shelve.open(META_FILE_PATH) as s:
-            try:
-                return s[guild_id]["current_battle"]
-            except KeyError:
-                return ""
-
-    @staticmethod
     async def _check_date(ctx: commands.Context, date: str) -> bool:
         """Validates a date.
 
