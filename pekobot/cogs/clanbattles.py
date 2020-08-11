@@ -215,7 +215,10 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             "current_battle_name": name
         }
         logger.info("Current clan battle has been updated.")
-        await ctx.send(f"正在进行中的公会战已更新为：{date} ({name})")
+        if name:
+            await ctx.send(f"正在进行中的公会战已更新为：{date} ({name})")
+        else:
+            await ctx.send(f"正在进行中的公会战已更新为：{date}")
 
     @commands.command(name="current-clan-battle", aliases=("当前会战", ))
     @commands.guild_only()
