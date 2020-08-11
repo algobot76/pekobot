@@ -40,6 +40,9 @@ GET_CLAN_BATTLE_BY_DATE = f"""
 SELECT date, name FROM {CLAN_BATTLE_TABLE}
 WHERE date='%s'
 """
+GET_ALL_CLAN_BATTLES = f"""
+SELECT date, name FROM {CLAN_BATTLE_TABLE};
+"""
 
 
 class ClanBattles(commands.Cog, name="公会战插件"):
@@ -243,6 +246,32 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             except KeyError:
                 logger.warning("Current clan battle does not exists.")
                 await ctx.send("目前无进行中的公会战")
+
+    @commands.command(name="list-clan-battles", aliases=("查看会战", ))
+    @commands.guild_only()
+    async def list_clan_battles(self, ctx: commands.Context):
+        """列举数据库中的公会战。"""
+
+        logger.info("%s (%s) is listing all clan battles.", ctx.author,
+                    ctx.guild)
+        with sqlite3.connect(self._get_db_name(ctx)) as conn:
+            cursor = conn.cursor()
+            cursor.execute(GET_ALL_CLAN_BATTLES)
+            battles = cursor.fetchall()
+            if not battles:
+                logger.warning("No available clan battles.")
+                await ctx.send("暂无公会战数据")
+                return
+
+            report = "所有公会战\n"
+            report += "=======\n"
+            for date, name in battles:
+                if not name:
+                    report += f"{date}\n"
+                else:
+                    report += f"{date} ({name})\n"
+                report += "-------\n"
+            await ctx.send(report)
 
     @commands.command(name="export-data", aliases=("导出数据", ))
     @commands.guild_only()
