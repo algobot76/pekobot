@@ -218,24 +218,23 @@ class ClanBattles(commands.Cog, name="公会战插件"):
     @commands.command(name="current-clan-battle", aliases=("当前会战", ))
     @commands.guild_only()
     async def show_current_clan_battle(self, ctx: commands.Context):
-        """显示目前进行中公会战。"""
+        """显示正在进行中公会战。"""
 
         logger.info("%s (%s) is requesting the current clan battle.",
                     ctx.author, ctx.guild)
-        with shelve.open(META_FILE_PATH) as s:
-            guild_id = str(ctx.guild.id)
-            try:
-                date = s[guild_id]["current_battle_date"]
-                name = s[guild_id]["current_battle_name"]
-                if name:
-                    logger.info("Current clan battle: %s (%s)", date, name)
-                    await ctx.send(f"当前公会战：{date} ({name})")
-                else:
-                    logger.info("Current clan battle: %s", date)
-                    await ctx.send(f"当前公会战：{date}")
-            except KeyError:
-                logger.warning("Current clan battle does not exists.")
-                await ctx.send("目前无进行中的公会战")
+        guild_id = str(ctx.guild.id)
+        try:
+            date = self.meta[guild_id]["current_battle_date"]
+            name = self.meta[guild_id]["current_battle_name"]
+            if name:
+                logger.info("Current clan battle: %s (%s).", date, name)
+                await ctx.send(f"当前公会战：{date} ({name})")
+            else:
+                logger.info("Current clan battle: %s.", date)
+                await ctx.send(f"当前公会战：{date}")
+        except KeyError:
+            logger.warning("Current clan battle does not exists.")
+            await ctx.send("目前无进行中的公会战")
 
     @commands.command(name="list-clan-battles", aliases=("查看会战", ))
     @commands.guild_only()
