@@ -266,7 +266,6 @@ class ClanBattles(commands.Cog, name="公会战插件"):
                 report += f"{date}\n"
             else:
                 report += f"{date} ({name})\n"
-            report += "-------\n"
         await ctx.send(report)
 
     @commands.command(name="delete-clan-battle", aliases=("删除会战", ))
