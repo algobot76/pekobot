@@ -23,6 +23,14 @@ CREATE TABLE {CLAN_MEMBER_TABLE}(
     member_nick TEXT
 )
 """
+COUNT_CLAN_MEMBER_BY_ID = f'''
+SELECT COUNT(*) FROM {CLAN_MEMBER_TABLE}
+WHERE member_id=%d;
+'''
+ADD_NEW_CLAN_MEMBER = f"""
+INSERT INTO {CLAN_MEMBER_TABLE} (member_id, member_name, member_nick)
+VALUES (%d, '%s', '%s');
+"""
 DELETE_MEMBER_FROM_CLAN = f'''
 DELETE FROM {CLAN_MEMBER_TABLE}
 WHERE member_id=%d;
@@ -92,41 +100,29 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         """加入公会。"""
 
         logger.info("%s (%s) is joining the clan.", ctx.author, ctx.guild)
-        with sqlite3.connect(self._get_db_file_name(ctx)) as conn:
-            if not db.table_exists(conn, CLAN_MEMBER_TABLE):
-                logger.error("The clan %s has not been created yet.",
-                             ctx.guild)
-                await ctx.send("公会尚未建立")
+        guild_id = ctx.guild.id
+        conn = self._get_db_connection(guild_id)
+        cursor = conn.cursor()
+
+        if not db.table_exists(conn, CLAN_MEMBER_TABLE):
+            logger.error("The clan has not been created yet.")
+            await ctx.send("公会尚未建立")
+        else:
+            author = ctx.author
+            if self._member_exists(conn, author.id):
+                logger.warning("%s is already in the clan.", author)
+                await ctx.send("你已是公会成员")
+                return
+
+            if author.nick:
+                nick = author.nick
             else:
-                cursor = conn.cursor()
-                author = ctx.author
-                check_member = f'''
-                SELECT COUNT(*) FROM clan_member
-                WHERE member_id={author.id};
-                '''
-                cursor.execute(check_member)
-                if cursor.fetchone()[0] != 0:
-                    logger.warning("%s is already in the clan %s.", author,
-                                   ctx.guild)
-                    await ctx.send("你已是公会成员")
-                    return
+                nick = ""
 
-                if author.nick:
-                    nick = author.nick
-                else:
-                    nick = ""
-
-                add_member = f'''
-                INSERT INTO clan_member (member_id, member_name, member_nick)
-                VALUES ({author.id}, '{author}', '{nick}');
-                '''
-                logger.info(
-                    "Inserting (member_id: %d, member_name: '%s') into %s.",
-                    author.id, author, CLAN_MEMBER_TABLE)
-                cursor.execute(add_member)
-                conn.commit()
-                logger.info("%s has joined the clan %s.", author, ctx.guild)
-                await ctx.send("入会成功")
+            cursor.execute(ADD_NEW_CLAN_MEMBER % (author.id, author, nick))
+            conn.commit()
+            logger.info("%s has joined the clan.", author)
+            await ctx.send("入会成功")
 
     @commands.command(name="leave-clan", aliases=("退会", ))
     @commands.guild_only()
@@ -351,6 +347,25 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         guild_id = ctx.guild.id
         return f"clanbattles-{guild_id}.db"
+
+    @staticmethod
+    def _member_exists(conn: sqlite3.Connection, member_id: int) -> bool:
+        """Checks if a member alreay exists in a clan.
+
+        Args:
+            conn: A DB connection.
+            member_id: The ID of a member.
+
+
+        Returns:
+            A bool that shows if the member already exists.
+        """
+
+        cursor = conn.cursor()
+        cursor.execute(COUNT_CLAN_MEMBER_BY_ID % member_id)
+        if cursor.fetchone()[0] != 0:
+            return True
+        return False
 
     @staticmethod
     def _get_current_clan_battle(ctx: commands.Context) -> str:
