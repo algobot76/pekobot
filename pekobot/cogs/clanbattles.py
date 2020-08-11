@@ -178,7 +178,9 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             if not display_names:
                 await ctx.send("暂无成员入会")
                 return
-            report = '\n'.join(display_names)
+            report = "公会成员\n"
+            report += "=======\n"
+            report += '\n'.join(display_names)
             await ctx.send(report)
 
     @commands.command(name="start-clan-battle", aliases=("开始会战", ))
