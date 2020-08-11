@@ -16,6 +16,13 @@ logger = logging.getLogger(__name__)
 META_FILE_PATH = "clanbattles-meta.db"
 
 CLAN_MEMBER_TABLE = "clan_member"
+CREATE_CLAN_MEMBER_TABLE = f"""
+CREATE TABLE {CLAN_MEMBER_TABLE}(
+    member_id INTEGER PRIMARY KEY,
+    member_name TEXT,
+    member_nick TEXT
+)
+"""
 DELETE_MEMBER_FROM_CLAN = f'''
 DELETE FROM {CLAN_MEMBER_TABLE}
 WHERE member_id=%d;
@@ -67,22 +74,17 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         """创建公会。"""
 
         logger.info("Creating a clan for the guild %s.", ctx.guild)
-        with sqlite3.connect(self._get_db_file_name(ctx)) as conn:
-            if not db.table_exists(conn, CLAN_MEMBER_TABLE):
-                cursor = conn.cursor()
-                create_table = f'''
-                CREATE TABLE {CLAN_MEMBER_TABLE} (
-                    member_id INTEGER PRIMARY KEY,
-                    member_name TEXT,
-                    member_nick TEXT
-                )
-                '''
-                cursor.execute(create_table)
-                logger.info("The clan %s has been created.", ctx.guild)
-                await ctx.send("建会成功")
-            else:
-                logger.warning("The clan %s already exists.", ctx.guild)
-                await ctx.send("公会已存在")
+        guild_id = ctx.guild.id
+        conn = self._get_db_connection(guild_id)
+        cursor = conn.cursor()
+
+        if not db.table_exists(conn, CLAN_MEMBER_TABLE):
+            cursor.execute(CREATE_CLAN_MEMBER_TABLE)
+            logger.info("The clan has been created.")
+            await ctx.send("建会成功")
+        else:
+            logger.warning("The clan already exists.")
+            await ctx.send("公会已存在")
 
     @commands.command(name="join-clan", aliases=("入会", ))
     @commands.guild_only()
