@@ -65,7 +65,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         """创建公会。"""
 
         logger.info("Creating a clan for the guild %s.", ctx.guild)
-        with sqlite3.connect(self._get_db_name(ctx)) as conn:
+        with sqlite3.connect(self._get_db_file_name(ctx)) as conn:
             if not db.table_exists(conn, CLAN_MEMBER_TABLE):
                 cursor = conn.cursor()
                 create_table = f'''
@@ -88,7 +88,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         """加入公会。"""
 
         logger.info("%s (%s) is joining the clan.", ctx.author, ctx.guild)
-        with sqlite3.connect(self._get_db_name(ctx)) as conn:
+        with sqlite3.connect(self._get_db_file_name(ctx)) as conn:
             if not db.table_exists(conn, CLAN_MEMBER_TABLE):
                 logger.error("The clan %s has not been created yet.",
                              ctx.guild)
@@ -130,7 +130,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         """退出公会。"""
 
         logger.info("%s (%s) is leaving the clan.", ctx.author, ctx.guild)
-        with sqlite3.connect(self._get_db_name(ctx)) as conn:
+        with sqlite3.connect(self._get_db_file_name(ctx)) as conn:
             if not db.table_exists(conn, CLAN_MEMBER_TABLE):
                 logger.error("The clan %s has not been created yet.",
                              ctx.guild)
@@ -160,7 +160,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         logger.info("%s (%s) wants to list all members of the clan.",
                     ctx.author, ctx.guild)
-        with sqlite3.connect(self._get_db_name(ctx)) as conn:
+        with sqlite3.connect(self._get_db_file_name(ctx)) as conn:
             cursor = conn.cursor()
             if not db.table_exists(conn, CLAN_MEMBER_TABLE):
                 logger.error("The clan %s has not been created yet.",
@@ -194,7 +194,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         if not await self._check_date(ctx, date):
             return
 
-        with sqlite3.connect(self._get_db_name(ctx)) as conn:
+        with sqlite3.connect(self._get_db_file_name(ctx)) as conn:
             cursor = conn.cursor()
             cursor.execute(CREATE_CLAN_BATTLE_TABLE)
 
@@ -248,7 +248,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         logger.info("%s (%s) is listing all clan battles.", ctx.author,
                     ctx.guild)
-        with sqlite3.connect(self._get_db_name(ctx)) as conn:
+        with sqlite3.connect(self._get_db_file_name(ctx)) as conn:
             cursor = conn.cursor()
             cursor.execute(GET_ALL_CLAN_BATTLES)
             battles = cursor.fetchall()
@@ -279,7 +279,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             return
 
         logger.info("The clan battle %s will be deleted.", date)
-        with sqlite3.connect(self._get_db_name(ctx)) as conn:
+        with sqlite3.connect(self._get_db_file_name(ctx)) as conn:
             cursor = conn.cursor()
             cursor.execute(COUNT_CLAN_BATTLE % date)
             if cursor.fetchone()[0] == 0:
@@ -309,15 +309,15 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         id_ = ctx.author.id
         user = self.bot.get_user(id_)
 
-        db_file = self._get_db_name(ctx)
+        db_file = self._get_db_file_name(ctx)
         if os.path.exists(db_file):
             await user.send(file=discord.File(db_file))
         else:
             await user.send("数据不存在")
 
     @staticmethod
-    def _get_db_name(ctx: commands.Context) -> str:
-        """Generates the DB name for a given guild.
+    def _get_db_file_name(ctx: commands.Context) -> str:
+        """Generates the DB file name for a given guild.
 
         Args:
             ctx: A command context
