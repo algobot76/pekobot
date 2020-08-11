@@ -23,6 +23,9 @@ CREATE TABLE {CLAN_MEMBER_TABLE}(
     member_nick TEXT
 )
 """
+GET_ALL_CLAN_MEMBERS = f'''
+SELECT member_name, member_nick FROM {CLAN_MEMBER_TABLE};
+'''
 COUNT_CLAN_MEMBER_BY_ID = f'''
 SELECT COUNT(*) FROM {CLAN_MEMBER_TABLE}
 WHERE member_id=%d;
@@ -153,30 +156,28 @@ class ClanBattles(commands.Cog, name="公会战插件"):
     async def list_members(self, ctx: commands.Context):
         """查看公会成员。"""
 
-        logger.info("%s (%s) wants to list all members of the clan.",
-                    ctx.author, ctx.guild)
-        with sqlite3.connect(self._get_db_file_name(ctx)) as conn:
-            cursor = conn.cursor()
-            if not db.table_exists(conn, CLAN_MEMBER_TABLE):
-                logger.error("The clan %s has not been created yet.",
-                             ctx.guild)
-                await ctx.send("公会尚未建立")
-            else:
-                list_members = '''
-                SELECT member_name, member_nick FROM clan_member;
-                '''
-                cursor.execute(list_members)
-                display_names = []
-                for name, nick in cursor.fetchall():
-                    if not nick:
-                        display_names.append(name)
-                    else:
-                        display_names.append(nick)
-                if not display_names:
-                    await ctx.send("暂无成员入会")
-                    return
-                report = '\n'.join(display_names)
-                await ctx.send(report)
+        logger.info("%s (%s) is listing all members of the clan.", ctx.author,
+                    ctx.guild)
+        guild_id = ctx.guild.id
+        conn = self._get_db_connection(guild_id)
+        cursor = conn.cursor()
+
+        if not db.table_exists(conn, CLAN_MEMBER_TABLE):
+            logger.error("The clan %s has not been created yet.", ctx.guild)
+            await ctx.send("公会尚未建立")
+        else:
+            cursor.execute(GET_ALL_CLAN_MEMBERS)
+            display_names = []
+            for name, nick in cursor.fetchall():
+                if not nick:
+                    display_names.append(name)
+                else:
+                    display_names.append(nick)
+            if not display_names:
+                await ctx.send("暂无成员入会")
+                return
+            report = '\n'.join(display_names)
+            await ctx.send(report)
 
     @commands.command(name="start-clan-battle", aliases=("开始会战", ))
     @commands.guild_only()
