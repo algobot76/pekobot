@@ -302,6 +302,35 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             except KeyError:
                 pass
 
+    @commands.command(name="set-clan-battle", aliases=("设置会战", ))
+    @commands.guild_only()
+    @commands.has_permissions(administrator=True)
+    async def set_clan_battle(self, ctx: commands.Context, date=""):
+        """设置正在进行中的公会战。"""
+
+        logger.info("%s (%s) is setting the current clan battle.", ctx.author,
+                    ctx.guild)
+        if not await self._check_date(ctx, date):
+            return
+
+        guild_id = ctx.guild.id
+        conn = self._get_db_connection(guild_id)
+        cursor = conn.cursor()
+
+        if not self._clan_battle_exists(conn, date):
+            logger.warning("The clan battle %s does not exist.", date)
+            await ctx.send("此公会战不存在")
+        else:
+            guild_id = str(guild_id)
+            cursor.execute(GET_CLAN_BATTLE_BY_DATE % date)
+            _, name = cursor.fetchone()
+            self.meta[guild_id] = {
+                "current_battle_date": date,
+                "current_battle_name": name
+            }
+            logger.info("The current clan battle has been set to %s.", date)
+            await ctx.send(f"正在进行中的会战已设置为：{date}")
+
     @commands.command(name="export-data", aliases=("导出数据", ))
     @commands.guild_only()
     @commands.has_permissions(administrator=True)
