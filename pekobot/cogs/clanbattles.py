@@ -89,7 +89,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         conn = self._get_db_connection(guild_id)
         cursor = conn.cursor()
 
-        if not db.table_exists(conn, CLAN_MEMBER_TABLE):
+        if not self._clan_exists(conn):
             cursor.execute(CREATE_CLAN_MEMBER_TABLE)
             logger.info("The clan has been created.")
             await ctx.send("建会成功")
@@ -107,7 +107,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         conn = self._get_db_connection(guild_id)
         cursor = conn.cursor()
 
-        if not db.table_exists(conn, CLAN_MEMBER_TABLE):
+        if not self._clan_exists(conn):
             logger.error("The clan has not been created yet.")
             await ctx.send("公会尚未建立")
         else:
@@ -137,7 +137,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         conn = self._get_db_connection(guild_id)
         cursor = conn.cursor()
 
-        if not db.table_exists(conn, CLAN_MEMBER_TABLE):
+        if not self._clan_exists(conn):
             logger.error("The clan %s has not been created yet.", ctx.guild)
             await ctx.send("公会尚未建立")
         else:
@@ -162,7 +162,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         conn = self._get_db_connection(guild_id)
         cursor = conn.cursor()
 
-        if not db.table_exists(conn, CLAN_MEMBER_TABLE):
+        if not self._clan_exists(conn):
             logger.error("The clan %s has not been created yet.", ctx.guild)
             await ctx.send("公会尚未建立")
         else:
@@ -343,6 +343,19 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         guild_id = ctx.guild.id
         return f"clanbattles-{guild_id}.db"
+
+    @staticmethod
+    def _clan_exists(conn: sqlite3.Connection) -> bool:
+        """Checks if a clan exists.
+
+        Args:
+            conn: A DB connection.
+
+        Returns:
+            A bool that indicates if the clan exists.
+        """
+
+        return db.table_exists(conn, CLAN_MEMBER_TABLE)
 
     @staticmethod
     def _member_exists(conn: sqlite3.Connection, member_id: int) -> bool:
