@@ -71,12 +71,14 @@ class ClanBattles(commands.Cog, name="公会战插件"):
     """The clan battles cog.
 
     Attributes:
-        bot: A pekobot instance.
-        connections: A dict that holds DB connections
+        bot: A Pekobot instance.
+        connections: A dict that holds DB connections.
+        meta: A file that stores metadata.
     """
     def __init__(self, bot: Pekobot):
         self.bot = bot
         self.connections = dict()
+        self.meta = shelve.open(META_FILE_PATH, writeback=True)
 
     @commands.command(name="create-clan", aliases=("建会", ))
     @commands.guild_only()
@@ -190,30 +192,28 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         if not await self._check_date(ctx, date):
             return
 
-        with sqlite3.connect(self._get_db_file_name(ctx)) as conn:
-            cursor = conn.cursor()
-            cursor.execute(CREATE_CLAN_BATTLE_TABLE)
+        guild_id = ctx.guild.id
+        conn = self._get_db_connection(guild_id)
+        cursor = conn.cursor()
 
-            cursor.execute(COUNT_CLAN_BATTLE % date)
-            if cursor.fetchone()[0] != 0:
-                logger.warning("Clan battle with date=%s already exists.",
-                               date)
-                await ctx.send("公会战已存在")
-                return
+        cursor.execute(CREATE_CLAN_BATTLE_TABLE)
 
-            logger.info("Creating a new clan battle with date=%s and name=%s.",
-                        date, name)
-            cursor.execute(CREATE_NEW_CLAN_BATTLE % (date, name))
-            await ctx.send("成功创建公会战")
+        if self._clan_battle_exists(conn, date):
+            logger.warning("Clan battle %s already exists.", date)
+            await ctx.send("公会战已存在")
+            return
 
-            # Set this clan battle as the current clan battle.
-            with shelve.open(META_FILE_PATH, writeback=True) as s:
-                guid_id = str(ctx.guild.id)
-                s[guid_id] = {
-                    "current_battle_date": date,
-                    "current_battle_name": name
-                }
-                logger.info("Current clan battle has been updated.")
+        cursor.execute(CREATE_NEW_CLAN_BATTLE % (date, name))
+        logger.info("The clan battle %s (%s) has been created.", date, name)
+        await ctx.send("成功创建公会战")
+
+        # Set this clan battle as the current clan battle.
+        self.meta[str(guild_id)] = {
+            "current_battle_date": date,
+            "current_battle_name": name
+        }
+        logger.info("Current clan battle has been updated.")
+        await ctx.send(f"正在进行中的公会战已更新为：{date} ({name})")
 
     @commands.command(name="current-clan-battle", aliases=("当前会战", ))
     @commands.guild_only()
@@ -372,6 +372,14 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         cursor = conn.cursor()
         cursor.execute(COUNT_CLAN_MEMBER_BY_ID % member_id)
+        if cursor.fetchone()[0] != 0:
+            return True
+        return False
+
+    @staticmethod
+    def _clan_battle_exists(conn: sqlite3.Connection, date: str) -> bool:
+        cursor = conn.cursor()
+        cursor.execute(COUNT_CLAN_BATTLE % date)
         if cursor.fetchone()[0] != 0:
             return True
         return False
