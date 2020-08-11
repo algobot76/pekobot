@@ -54,9 +54,11 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
     Attributes:
         bot: A pekobot instance.
+        connections: A dict that holds DB connections
     """
     def __init__(self, bot: Pekobot):
         self.bot = bot
+        self.connections = dict()
 
     @commands.command(name="create-clan", aliases=("建会", ))
     @commands.guild_only()
@@ -248,24 +250,27 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         logger.info("%s (%s) is listing all clan battles.", ctx.author,
                     ctx.guild)
-        with sqlite3.connect(self._get_db_file_name(ctx)) as conn:
-            cursor = conn.cursor()
-            cursor.execute(GET_ALL_CLAN_BATTLES)
-            battles = cursor.fetchall()
-            if not battles:
-                logger.warning("No available clan battles.")
-                await ctx.send("暂无公会战数据")
-                return
+        guild_id = ctx.guild.id
+        conn = self._get_db_connection(guild_id)
+        cursor = conn.cursor()
 
-            report = "所有公会战\n"
-            report += "=======\n"
-            for date, name in battles:
-                if not name:
-                    report += f"{date}\n"
-                else:
-                    report += f"{date} ({name})\n"
-                report += "-------\n"
-            await ctx.send(report)
+        cursor.execute(GET_ALL_CLAN_BATTLES)
+        battles = cursor.fetchall()
+        if not battles:
+            logger.warning("Clan battles for the guild %s not found.",
+                           ctx.guild)
+            await ctx.send("暂无公会战数据")
+            return
+
+        report = "所有公会战\n"
+        report += "=======\n"
+        for date, name in battles:
+            if not name:
+                report += f"{date}\n"
+            else:
+                report += f"{date} ({name})\n"
+            report += "-------\n"
+        await ctx.send(report)
 
     @commands.command(name="delete-clan-battle", aliases=("删除会战", ))
     @commands.guild_only()
@@ -314,6 +319,22 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             await user.send(file=discord.File(db_file))
         else:
             await user.send("数据不存在")
+
+    def _get_db_connection(self, guild_id: int) -> sqlite3.Connection:
+        """Gets the DB connection for a given guild.
+
+        Args:
+            guild_id: The ID of a guild.
+        """
+
+        db_file_name = f"clanbattles-{guild_id}.db"
+        try:
+            conn = self.connections[db_file_name]
+            return conn
+        except KeyError:
+            conn = sqlite3.connect(db_file_name)
+            self.connections[db_file_name] = conn
+            return conn
 
     @staticmethod
     def _get_db_file_name(ctx: commands.Context) -> str:
