@@ -239,7 +239,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
     @commands.command(name="list-clan-battles", aliases=("查看会战", ))
     @commands.guild_only()
     async def list_clan_battles(self, ctx: commands.Context):
-        """列举数据库中的公会战。"""
+        """列举已有的公会战。"""
 
         logger.info("%s (%s) is listing all clan battles.", ctx.author,
                     ctx.guild)
@@ -250,8 +250,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         cursor.execute(GET_ALL_CLAN_BATTLES)
         battles = cursor.fetchall()
         if not battles:
-            logger.warning("Clan battles for the guild %s not found.",
-                           ctx.guild)
+            logger.warning("Clan battles not found.")
             await ctx.send("暂无公会战数据")
             return
 
