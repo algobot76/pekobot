@@ -140,6 +140,11 @@ dmypy.json
 ### Brotli ###
 *.br
 
+### Shelve ###
+*.db.bak
+*.db.dat
+*.db.dir
+
 ### Images ###
 images/
 
