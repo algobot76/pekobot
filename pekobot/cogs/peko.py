@@ -4,10 +4,10 @@ import os
 import random
 
 import discord
-import yaml
 from discord.ext import commands
 
 from pekobot.bot import Pekobot
+from pekobot.utils import files
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +39,7 @@ class Peko(commands.Cog, name="佩可插件"):
     """
     def __init__(self, bot):
         self.bot = bot
-        with open(PEKO_COMMENTS_FILE_PATH, "r") as f:
-            data = yaml.load(f, Loader=yaml.FullLoader)
+        data = files.load_yaml_file(PEKO_COMMENTS_FILE_PATH)
         self.comments = data.get("comments", [])
 
     @commands.Cog.listener()
