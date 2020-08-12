@@ -4,12 +4,15 @@ import os
 import random
 
 import discord
-import yaml
 from discord.ext import commands
 
 from pekobot.bot import Pekobot
+from pekobot.utils import files
 
 logger = logging.getLogger(__name__)
+
+# NYB = New Year Burst
+NYB_GIF_PATH = os.path.join("data", "nyb.gif")
 
 NYB_TEXT = '''
 正在播放：New Year Burst
@@ -24,8 +27,7 @@ STATUS_REPORT_FORMAT = '''
 目前涩图数量：{num_setu}
 '''
 
-PEKO_COMMENTS_FILE = os.path.join("pekobot", "cogs", "data",
-                                  "peko_comments.yaml")
+PEKO_COMMENTS_FILE_PATH = os.path.join("data", "peko_comments.yaml")
 
 
 class Peko(commands.Cog, name="佩可插件"):
@@ -37,8 +39,7 @@ class Peko(commands.Cog, name="佩可插件"):
     """
     def __init__(self, bot):
         self.bot = bot
-        with open(PEKO_COMMENTS_FILE, "r") as f:
-            data = yaml.load(f, Loader=yaml.FullLoader)
+        data = files.load_yaml_file(PEKO_COMMENTS_FILE_PATH)
         self.comments = data.get("comments", [])
 
     @commands.Cog.listener()
@@ -84,8 +85,7 @@ class Peko(commands.Cog, name="佩可插件"):
         """
 
         if "春黑" in msg.content:
-            await msg.channel.send(file=discord.File(
-                os.path.join("pekobot", "cogs", "data", "nyb.gif")))
+            await msg.channel.send(file=discord.File(NYB_GIF_PATH))
             await msg.channel.send(NYB_TEXT)
 
     @commands.command(name="tap", aliases=("戳", "👇"))

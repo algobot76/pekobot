@@ -1,10 +1,11 @@
 """Nicknames cog"""
 import os
 
-import yaml
 from discord.ext import commands
 
-NICKNAMES_FILE_PATH = os.path.join("pekobot", "cogs", "data", "nicknames.yaml")
+from pekobot.utils import files
+
+NICKNAMES_FILE_PATH = os.path.join("data", "nicknames.yaml")
 
 
 class Nicknames(commands.Cog, name="昵称插件"):
@@ -16,8 +17,7 @@ class Nicknames(commands.Cog, name="昵称插件"):
     """
     def __init__(self, bot):
         self.bot = bot
-        with open(NICKNAMES_FILE_PATH, "r") as f:
-            self.data = yaml.load(f, Loader=yaml.FullLoader)
+        self.data = files.load_yaml_file(NICKNAMES_FILE_PATH)
 
     @commands.command(name="whois", aliases=("谁是", ))
     async def whois(self, ctx, nickname):
