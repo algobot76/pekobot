@@ -336,13 +336,9 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             logger.warning("The clan battle %s does not exist.", date)
             await ctx.send("此公会战不存在")
         else:
-            guild_id = str(guild_id)
             cursor.execute(GET_CLAN_BATTLE_BY_DATE % date)
             _, name = cursor.fetchone()
-            self.meta[guild_id] = {
-                "current_battle_date": date,
-                "current_battle_name": name
-            }
+            self._set_current_battle(guild_id, date, name)
             logger.info("The current clan battle has been set to %s.", date)
             await ctx.send(f"正在进行中的会战已设置为：{date}")
 
@@ -463,6 +459,21 @@ class ClanBattles(commands.Cog, name="公会战插件"):
                     "current_battle_name": ""
                 }
                 return None
+
+    def _set_current_battle(self, guild_id: int, date: str, name: str = ""):
+        """Sets the current clan battle.
+
+        Args:
+            guild_id: ID of a guild.
+            date: A date string.
+            name: An optional name.
+        """
+        with self.meta as m:
+            guild_id = str(guild_id)
+            m[guild_id] = {
+                "current_battle_date": date,
+                "current_battle_name": name
+            }
 
     # pylint: disable=invalid-overridden-method
     async def cog_command_error(self, ctx: commands.Context,
