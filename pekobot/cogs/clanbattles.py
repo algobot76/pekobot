@@ -78,12 +78,10 @@ class ClanBattles(commands.Cog, name="公会战插件"):
     Attributes:
         bot: A Pekobot instance.
         connections: A dict that holds DB connections.
-        meta: A file that stores metadata.
     """
     def __init__(self, bot: Pekobot):
         self.bot = bot
         self.connections = dict()
-        self.meta = shelve.open(META_FILE_PATH, writeback=True)
 
     @commands.command(name="create-clan", aliases=("建会", ))
     @commands.guild_only()
@@ -218,10 +216,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         await ctx.send("成功创建公会战")
 
         # Set this clan battle as the current clan battle.
-        self.meta[str(guild_id)] = {
-            "current_battle_date": date,
-            "current_battle_name": name
-        }
+        self._set_current_battle(guild_id, date, name)
         logger.info("Current clan battle has been updated.")
         if name:
             await ctx.send(f"正在进行中的公会战已更新为：{date} ({name})")
@@ -304,16 +299,13 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             logger.info("The clan battle %s has been deleted.", date)
             await ctx.send("公会战已删除")
 
-            guild_id = str(guild_id)
-            try:
-                curr_date = self.meta[guild_id]["current_battle_date"]
-                if curr_date == date:
-                    self.meta[guild_id]["current_battle_date"] = ""
-                    self.meta[guild_id]["current_battle_name"] = ""
+            data = self._get_current_battle(guild_id)
+            if data:
+                curr_date, _ = data
+                if date == curr_date:
+                    self._set_current_battle(guild_id, "", "")
                     logger.info("Current clan battle has been reset.")
-                    await ctx.send("正在进行中的会战已被重置")
-            except KeyError:
-                pass
+                    await ctx.send("正在进行中的公会战已被重置")
 
     @commands.command(name="set-clan-battle", aliases=("设置会战", ))
     @commands.guild_only()
@@ -437,7 +429,8 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         except ValueError:
             return False
 
-    def _get_current_battle(self, guild_id: int) -> Optional[Tuple[str, str]]:
+    @staticmethod
+    def _get_current_battle(guild_id: int) -> Optional[Tuple[str, str]]:
         """Gets the current clan battle.
 
         Args:
@@ -447,20 +440,21 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             A tuple that contains the battle's date and name. Or None if such
             info is not found.
         """
-        with self.meta as m:
+        with shelve.open(META_FILE_PATH, writeback=True) as s:
             guild_id = str(guild_id)
             try:
-                date = m[guild_id]["current_battle_date"]
-                name = m[guild_id]["current_battle_name"]
+                date = s[guild_id]["current_battle_date"]
+                name = s[guild_id]["current_battle_name"]
                 return date, name
             except KeyError:
-                m[guild_id] = {
+                s[guild_id] = {
                     "current_battle_date": "",
                     "current_battle_name": ""
                 }
                 return None
 
-    def _set_current_battle(self, guild_id: int, date: str, name: str = ""):
+    @staticmethod
+    def _set_current_battle(guild_id: int, date: str, name: str = ""):
         """Sets the current clan battle.
 
         Args:
@@ -468,9 +462,9 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             date: A date string.
             name: An optional name.
         """
-        with self.meta as m:
+        with shelve.open(META_FILE_PATH, writeback=True) as s:
             guild_id = str(guild_id)
-            m[guild_id] = {
+            s[guild_id] = {
                 "current_battle_date": date,
                 "current_battle_name": name
             }
