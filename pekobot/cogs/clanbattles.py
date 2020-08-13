@@ -4,6 +4,7 @@ import logging
 import os
 import shelve
 import sqlite3
+from typing import Optional, Tuple
 
 import discord
 from discord.ext import commands
@@ -234,19 +235,20 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         logger.info("%s (%s) is requesting the current clan battle.",
                     ctx.author, ctx.guild)
-        guild_id = str(ctx.guild.id)
-        try:
-            date = self.meta[guild_id]["current_battle_date"]
-            name = self.meta[guild_id]["current_battle_name"]
-            if name:
-                logger.info("Current clan battle: %s (%s).", date, name)
-                await ctx.send(f"当前公会战：{date} ({name})")
-            else:
-                logger.info("Current clan battle: %s.", date)
-                await ctx.send(f"当前公会战：{date}")
-        except KeyError:
-            logger.warning("Current clan battle does not exists.")
+        guild_id = ctx.guild.id
+        data = self._get_current_battle(guild_id)
+        if not data:
+            logger.warning("Current clan battle does not exist.")
             await ctx.send("目前无进行中的公会战")
+            return
+
+        date, name = data
+        if name:
+            logger.info("Current clan battle: %s (%s).", date, name)
+            await ctx.send(f"当前公会战：{date} ({name})")
+        else:
+            logger.info("Current clan battle: %s.", date)
+            await ctx.send(f"当前公会战：{date}")
 
     @commands.command(name="list-clan-battles", aliases=("查看会战", ))
     @commands.guild_only()
@@ -438,6 +440,29 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             return True
         except ValueError:
             return False
+
+    def _get_current_battle(self, guild_id: int) -> Optional[Tuple[str, str]]:
+        """Gets the current clan battle.
+
+        Args:
+            guild_id: ID of a guild
+
+        Returns:
+            A tuple that contains the battle's date and name. Or None if such
+            info is not found.
+        """
+        with self.meta as m:
+            guild_id = str(guild_id)
+            try:
+                date = m[guild_id]["current_battle_date"]
+                name = m[guild_id]["current_battle_name"]
+                return date, name
+            except KeyError:
+                m[guild_id] = {
+                    "current_battle_date": "",
+                    "current_battle_name": ""
+                }
+                return None
 
     # pylint: disable=invalid-overridden-method
     async def cog_command_error(self, ctx: commands.Context,
