@@ -342,9 +342,10 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         logger.info("%s (%s) is export data.", ctx.author, ctx.guild)
         id_ = ctx.author.id
+        guild_id = ctx.guild.id
         user = self.bot.get_user(id_)
 
-        db_file = self._get_db_file_name(ctx)
+        db_file = f"clanbattles-{guild_id}.db"
         if os.path.exists(db_file):
             await user.send(file=discord.File(db_file))
             logger.info("Data haS been exported.")
@@ -369,20 +370,6 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             return conn
 
     @staticmethod
-    def _get_db_file_name(ctx: commands.Context) -> str:
-        """Generates the DB file name for a given guild.
-
-        Args:
-            ctx: A command context
-
-        Returns:
-            A table name.
-        """
-
-        guild_id = ctx.guild.id
-        return f"clanbattles-{guild_id}.db"
-
-    @staticmethod
     def _clan_exists(conn: sqlite3.Connection) -> bool:
         """Checks if a clan exists.
 
@@ -402,7 +389,6 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         Args:
             conn: A DB connection.
             member_id: The ID of a member.
-
 
         Returns:
             A bool that shows if the member already exists.
