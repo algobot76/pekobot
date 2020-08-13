@@ -67,6 +67,10 @@ WHERE date='%s';
 """
 
 
+class MissingDateError(commands.CommandError):
+    """Exception raised when date is missing."""
+
+
 class ClanBattles(commands.Cog, name="公会战插件"):
     """The clan battles cog.
 
@@ -191,7 +195,9 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         logger.info("%s (%s) is creating a new clan battle.", ctx.author,
                     ctx.guild)
-        if not await self._check_date(ctx, date):
+        if not self._check_date(date):
+            logger.error("Invalid date: %s", date)
+            await ctx.send("请输入合法日期（YYYY-MM-DD）")
             return
 
         guild_id = ctx.guild.id
@@ -277,7 +283,9 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         logger.info("%s (%s) is deleting a clan battle.", ctx.author,
                     ctx.guild)
-        if not await self._check_date(ctx, date):
+        if not self._check_date(date):
+            logger.error("Invalid date: %s", date)
+            await ctx.send("请输入合法日期（YYYY-MM-DD）")
             return
 
         guild_id = ctx.guild.id
@@ -313,7 +321,9 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         logger.info("%s (%s) is setting the current clan battle.", ctx.author,
                     ctx.guild)
-        if not await self._check_date(ctx, date):
+        if not self._check_date(date):
+            logger.error("Invalid date: %s", date)
+            await ctx.send("请输入合法日期（YYYY-MM-DD）")
             return
 
         guild_id = ctx.guild.id
@@ -409,28 +419,31 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         return False
 
     @staticmethod
-    async def _check_date(ctx: commands.Context, date: str) -> bool:
-        """Validates a date.
+    def _check_date(date: str) -> bool:
+        """Checks if date is in YYYY-MM-DD format.
+
+        A MissingDateError will be raised if the date is an empty string.
 
         Args:
-            ctx: A command context.
-            date: A date in YYYY-MM-DD format.
+            date: A date string.
 
         Returns:
             A bool that indicates if the date is valid.
         """
 
         if not date:
-            logger.error("Empty date.")
-            await ctx.send("请输入公会战日期")
-            return False
+            raise MissingDateError("Date is missing in user input.")
         try:
             datetime.datetime.strptime(date, '%Y-%m-%d')
+            return True
         except ValueError:
-            logger.error("Invalid date: %s", date)
-            await ctx.send("请输入合法日期（YYYY-MM-DD）")
             return False
-        return True
+
+    # pylint: disable=invalid-overridden-method
+    async def cog_command_error(self, ctx: commands.Context,
+                                error: commands.CommandError):
+        if isinstance(error, MissingDateError):
+            await ctx.send("请输入公会战日期")
 
 
 def setup(bot):
