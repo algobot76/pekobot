@@ -4,15 +4,18 @@ import logging
 import os
 import shelve
 import sqlite3
-from typing import Optional, Tuple
+from enum import IntEnum
+from typing import Optional, Tuple, Type, TypeVar
 
 import discord
 from discord.ext import commands
 
 from pekobot.bot import Pekobot
-from pekobot.utils import db
+from pekobot.utils import db, files
 
 logger = logging.getLogger(__name__)
+
+BOSS_DATA_FILE_PATH = os.path.join("data", "boss_data.yaml")
 
 META_FILE_PATH = "clanbattles-meta.db"
 
@@ -67,9 +70,62 @@ DELETE FROM {CLAN_BATTLE_TABLE}
 WHERE date='%s';
 """
 
+CLAN_BATTLE_RUN_TABLE = "clan_battle_run"
+CREATE_CLAN_BATTLE_RUN_TABLE = f"""
+CREATE TABLE IF NOT EXISTS {CLAN_BATTLE_RUN_TABLE} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    member_id INTEGER NOT NULL,
+    timestamp REAL NOT NULL,
+    round INTEGER NOT NULL,
+    boss INTEGER NOT NULL,
+    damage INTEGER NOT NULL,
+    type INTEGER NOT NULL,
+    FOREIGN KEY (member_id) REFERENCES clan_member(member_id)
+)
+"""
+ADD_NEW_BATTLE_RUN = f"""
+INSERT INTO {CLAN_BATTLE_RUN_TABLE} (member_id, timestamp, round, boss, damage, 
+type)
+VALUES (%d, %f, %d, %d, %d, %d);
+"""
+
 
 class MissingDateError(commands.CommandError):
     """Exception raised when date is missing."""
+
+
+class MissingDamageError(commands.CommandError):
+    """Exception raised when damage is missing."""
+
+
+TierType = TypeVar("TierType", bound="Tier")
+
+
+class Tier(IntEnum):
+    """Representation of a tier."""
+    A = 0
+    B = 1
+    C = 2
+    D = 3
+
+    @classmethod
+    def get_tier(cls: Type[TierType], round_: int) -> TierType:
+        """Gets the tier for a given round."""
+        if round_ >= 35:
+            return cls.D
+        if round_ >= 11:
+            return cls.C
+        if round_ >= 4:
+            return cls.B
+        return cls.A
+
+
+class Run(IntEnum):
+    """Representation of a run."""
+    FULL = 0
+    LEFTOVER = 1
+    LAST = 2
+    LOST = 3
 
 
 class ClanBattles(commands.Cog, name="公会战插件"):
@@ -77,10 +133,12 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
     Attributes:
         bot: A Pekobot instance.
+        boss_data: Data loaded from boss_data.yaml.
         connections: A dict that holds DB connections.
     """
     def __init__(self, bot: Pekobot):
         self.bot = bot
+        self.boss_data = files.load_yaml_file(BOSS_DATA_FILE_PATH)
         self.connections = dict()
 
     @commands.command(name="create-clan", aliases=("建会", ))
@@ -204,6 +262,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         cursor = conn.cursor()
 
         cursor.execute(CREATE_CLAN_BATTLE_TABLE)
+        cursor.execute(CREATE_CLAN_BATTLE_RUN_TABLE)
 
         if self._clan_battle_exists(conn, date):
             logger.warning("Clan battle %s already exists.", date)
@@ -333,6 +392,71 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             logger.info("The current clan battle has been set to %s.", date)
             await ctx.send(f"正在进行中的会战已设置为：{date}")
 
+    @commands.command(name="report-run", aliases=("出刀", ))
+    @commands.guild_only()
+    async def report_run(self, ctx: commands.Context, *args):
+        """公会战出刀。"""
+
+        logger.info("%s (%s) is reporting a run.", ctx.author, ctx.guild)
+
+        guild_id = ctx.guild.id
+        member_id = ctx.author.id
+        conn = self._get_db_connection(guild_id)
+        cursor = conn.cursor()
+
+        if not self._member_exists(conn, member_id):
+            logging.warning("%s (%s) has not joined the clan yet.", ctx.author,
+                            ctx.guild)
+            await ctx.send("你还不是公会成员，无法出刀")
+            return
+
+        if not self._current_clan_battle_exists(guild_id):
+            logger.warning("Current clan battle does not exist.")
+            await ctx.send("无正在进行中的公会战，无法出刀")
+            return
+
+        if not args:
+            logger.warning("Details of the run not provided.")
+            await ctx.send("这是啥刀啊？")
+            return
+
+        # Only damage is provided.
+        if len(args) == 1:
+            damage = args[0]
+            if not self._check_damage(damage):
+                logger.error("Invalid damage: %s.", damage)
+                await ctx.send("请输入合法伤害（>= 0）")
+                return
+
+            round_, boss, hp = self._get_current_battle(guild_id)
+            damage = int(damage)
+            if damage > hp:
+                logger.warning("Overkill (damage: %s, hp: %s).", damage, hp)
+                await ctx.send("请勿过度击杀")
+                return
+
+            if damage < hp:
+                run_type = Run.FULL
+            else:
+                run_type = Run.LAST
+
+            now = _get_now()
+            cursor.execute(ADD_NEW_CLAN_MEMBER %
+                           (member_id, now, round_, boss, damage, run_type))
+            conn.commit()
+
+            # Update the current progress.
+            hp -= damage
+            if hp == 0:
+                if boss < 4:
+                    boss += 1
+                else:
+                    boss = 0
+                    round_ += 1
+                tier = Tier.get_tier(round_)
+                hp = self.boss_data["BOSS_HP_JP"][tier][boss]
+            self._set_current_progress(guild_id, round_, boss, hp)
+
     @commands.command(name="export-data", aliases=("导出数据", ))
     @commands.guild_only()
     @commands.has_permissions(administrator=True)
@@ -407,6 +531,12 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             return True
         return False
 
+    def _current_clan_battle_exists(self, guild_id: int) -> bool:
+        data = self._get_current_battle(guild_id)
+        if not data:
+            return False
+        return True
+
     @staticmethod
     def _check_date(date: str) -> bool:
         """Checks if date is in YYYY-MM-DD format.
@@ -427,6 +557,29 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             return True
         except ValueError:
             return False
+
+    @staticmethod
+    def _check_damage(damage: str) -> bool:
+        """Checks if damage is a positive integer.
+
+        A MissingDamageError will be raised if the damage is an empty string.
+
+        Args:
+            damage: A damage string.
+
+        Returns:
+            A bool that indicates if the date is valid.
+        """
+        if not damage:
+            raise MissingDamageError("Damage is missing in user input.")
+
+        if not damage.isdigit():
+            return False
+
+        if int(damage) < 0:
+            return False
+
+        return True
 
     @staticmethod
     def _get_current_battle(guild_id: int) -> Optional[Tuple[str, str]]:
@@ -468,14 +621,77 @@ class ClanBattles(commands.Cog, name="公会战插件"):
                 "current_battle_name": name
             }
 
+    def _get_current_progress(self,
+                              guild_id: int) -> Optional[Tuple[int, int, int]]:
+        """Gets the current progress.
+
+        Args:
+            guild_id: ID of a guild.
+
+        Returns:
+            A tuple that contains the current round, boss, and HP. Or None if
+            such info is not found.
+        """
+
+        with shelve.open(META_FILE_PATH, writeback=True) as s:
+            guild_id = str(guild_id)
+            try:
+                round_ = s[guild_id]["current_round"]
+                boss = s[guild_id]["current_boss"]
+                hp = s[guild_id]["current_hp"]
+                return round_, boss, hp
+            except KeyError:
+                round_ = 1
+                tier = Tier.get_tier(round_)
+                boss = 0
+                hp = self.boss_data["BOSS_HP_JP"][tier][boss]
+                s[guild_id] = {
+                    "current_round": round_,
+                    "current_boss": boss,
+                    "current_hp": hp
+                }
+                return None
+
+    @staticmethod
+    def _set_current_progress(guild_id: int, round_: int, boss: int, hp: int):
+        """Sets the current progress.
+
+        Args:
+            guild_id: ID of a guild.
+            round_: A round number.
+            boss: A boss number (0-3)
+            hp: A HP number.
+        """
+
+        with shelve.open(META_FILE_PATH, writeback=True) as s:
+            guild_id = str(guild_id)
+
+            s[guild_id] = {
+                "current_round": round_,
+                "current_boss": boss,
+                "current_hp": hp
+            }
+
     # pylint: disable=invalid-overridden-method
     async def cog_command_error(self, ctx: commands.Context,
                                 error: commands.CommandError):
         if isinstance(error, MissingDateError):
             await ctx.send("请输入公会战日期")
+        if isinstance(error, MissingDamageError):
+            await ctx.send("请输入伤害")
 
 
 def setup(bot):
     """A helper function used to load the cog."""
 
     bot.add_cog(ClanBattles(bot))
+
+
+def _get_now() -> float:
+    """Gets the current timestamp.
+
+    Returns:
+        A timestamp.
+    """
+
+    return datetime.datetime.now(datetime.timezone.utc).timestamp()
