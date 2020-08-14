@@ -4,6 +4,7 @@ import logging
 import os
 import shelve
 import sqlite3
+from typing import Optional, Tuple
 
 import discord
 from discord.ext import commands
@@ -67,18 +68,20 @@ WHERE date='%s';
 """
 
 
+class MissingDateError(commands.CommandError):
+    """Exception raised when date is missing."""
+
+
 class ClanBattles(commands.Cog, name="公会战插件"):
     """The clan battles cog.
 
     Attributes:
         bot: A Pekobot instance.
         connections: A dict that holds DB connections.
-        meta: A file that stores metadata.
     """
     def __init__(self, bot: Pekobot):
         self.bot = bot
         self.connections = dict()
-        self.meta = shelve.open(META_FILE_PATH, writeback=True)
 
     @commands.command(name="create-clan", aliases=("建会", ))
     @commands.guild_only()
@@ -140,7 +143,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         cursor = conn.cursor()
 
         if not self._clan_exists(conn):
-            logger.error("The clan %s has not been created yet.", ctx.guild)
+            logger.error("The clan has not been created yet.")
             await ctx.send("公会尚未建立")
         else:
             author = ctx.author
@@ -165,7 +168,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         cursor = conn.cursor()
 
         if not self._clan_exists(conn):
-            logger.error("The clan %s has not been created yet.", ctx.guild)
+            logger.error("The clan has not been created yet.")
             await ctx.send("公会尚未建立")
         else:
             cursor.execute(GET_ALL_CLAN_MEMBERS)
@@ -191,7 +194,9 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         logger.info("%s (%s) is creating a new clan battle.", ctx.author,
                     ctx.guild)
-        if not await self._check_date(ctx, date):
+        if not self._check_date(date):
+            logger.error("Invalid date: %s", date)
+            await ctx.send("请输入合法日期（YYYY-MM-DD）")
             return
 
         guild_id = ctx.guild.id
@@ -207,14 +212,11 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         cursor.execute(CREATE_NEW_CLAN_BATTLE % (date, name))
         conn.commit()
-        logger.info("The clan battle %s (%s) has been created.", date, name)
+        logger.info("The clan battle %s has been created.", date)
         await ctx.send("成功创建公会战")
 
         # Set this clan battle as the current clan battle.
-        self.meta[str(guild_id)] = {
-            "current_battle_date": date,
-            "current_battle_name": name
-        }
+        self._set_current_battle(guild_id, date, name)
         logger.info("Current clan battle has been updated.")
         if name:
             await ctx.send(f"正在进行中的公会战已更新为：{date} ({name})")
@@ -228,19 +230,19 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         logger.info("%s (%s) is requesting the current clan battle.",
                     ctx.author, ctx.guild)
-        guild_id = str(ctx.guild.id)
-        try:
-            date = self.meta[guild_id]["current_battle_date"]
-            name = self.meta[guild_id]["current_battle_name"]
-            if name:
-                logger.info("Current clan battle: %s (%s).", date, name)
-                await ctx.send(f"当前公会战：{date} ({name})")
-            else:
-                logger.info("Current clan battle: %s.", date)
-                await ctx.send(f"当前公会战：{date}")
-        except KeyError:
-            logger.warning("Current clan battle does not exists.")
+        guild_id = ctx.guild.id
+        data = self._get_current_battle(guild_id)
+        if not data:
+            logger.warning("Current clan battle does not exist.")
             await ctx.send("目前无进行中的公会战")
+            return
+
+        date, name = data
+        logger.info("Current clan battle: %s.", data)
+        if name:
+            await ctx.send(f"当前公会战：{date} ({name})")
+        else:
+            await ctx.send(f"当前公会战：{date}")
 
     @commands.command(name="list-clan-battles", aliases=("查看会战", ))
     @commands.guild_only()
@@ -277,7 +279,9 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         logger.info("%s (%s) is deleting a clan battle.", ctx.author,
                     ctx.guild)
-        if not await self._check_date(ctx, date):
+        if not self._check_date(date):
+            logger.error("Invalid date: %s", date)
+            await ctx.send("请输入合法日期（YYYY-MM-DD）")
             return
 
         guild_id = ctx.guild.id
@@ -294,16 +298,13 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             logger.info("The clan battle %s has been deleted.", date)
             await ctx.send("公会战已删除")
 
-            guild_id = str(guild_id)
-            try:
-                curr_date = self.meta[guild_id]["current_battle_date"]
-                if curr_date == date:
-                    self.meta[guild_id]["current_battle_date"] = ""
-                    self.meta[guild_id]["current_battle_name"] = ""
+            data = self._get_current_battle(guild_id)
+            if data:
+                curr_date, _ = data
+                if date == curr_date:
+                    self._set_current_battle(guild_id, "", "")
                     logger.info("Current clan battle has been reset.")
-                    await ctx.send("正在进行中的会战已被重置")
-            except KeyError:
-                pass
+                    await ctx.send("正在进行中的公会战已被重置")
 
     @commands.command(name="set-clan-battle", aliases=("设置会战", ))
     @commands.guild_only()
@@ -313,7 +314,9 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         logger.info("%s (%s) is setting the current clan battle.", ctx.author,
                     ctx.guild)
-        if not await self._check_date(ctx, date):
+        if not self._check_date(date):
+            logger.error("Invalid date: %s", date)
+            await ctx.send("请输入合法日期（YYYY-MM-DD）")
             return
 
         guild_id = ctx.guild.id
@@ -324,13 +327,9 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             logger.warning("The clan battle %s does not exist.", date)
             await ctx.send("此公会战不存在")
         else:
-            guild_id = str(guild_id)
             cursor.execute(GET_CLAN_BATTLE_BY_DATE % date)
             _, name = cursor.fetchone()
-            self.meta[guild_id] = {
-                "current_battle_date": date,
-                "current_battle_name": name
-            }
+            self._set_current_battle(guild_id, date, name)
             logger.info("The current clan battle has been set to %s.", date)
             await ctx.send(f"正在进行中的会战已设置为：{date}")
 
@@ -342,9 +341,10 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         logger.info("%s (%s) is export data.", ctx.author, ctx.guild)
         id_ = ctx.author.id
+        guild_id = ctx.guild.id
         user = self.bot.get_user(id_)
 
-        db_file = self._get_db_file_name(ctx)
+        db_file = f"clanbattles-{guild_id}.db"
         if os.path.exists(db_file):
             await user.send(file=discord.File(db_file))
             logger.info("Data haS been exported.")
@@ -369,20 +369,6 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             return conn
 
     @staticmethod
-    def _get_db_file_name(ctx: commands.Context) -> str:
-        """Generates the DB file name for a given guild.
-
-        Args:
-            ctx: A command context
-
-        Returns:
-            A table name.
-        """
-
-        guild_id = ctx.guild.id
-        return f"clanbattles-{guild_id}.db"
-
-    @staticmethod
     def _clan_exists(conn: sqlite3.Connection) -> bool:
         """Checks if a clan exists.
 
@@ -403,7 +389,6 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             conn: A DB connection.
             member_id: The ID of a member.
 
-
         Returns:
             A bool that shows if the member already exists.
         """
@@ -423,28 +408,71 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         return False
 
     @staticmethod
-    async def _check_date(ctx: commands.Context, date: str) -> bool:
-        """Validates a date.
+    def _check_date(date: str) -> bool:
+        """Checks if date is in YYYY-MM-DD format.
+
+        A MissingDateError will be raised if the date is an empty string.
 
         Args:
-            ctx: A command context.
-            date: A date in YYYY-MM-DD format.
+            date: A date string.
 
         Returns:
             A bool that indicates if the date is valid.
         """
 
         if not date:
-            logger.error("Empty date.")
-            await ctx.send("请输入公会战日期")
-            return False
+            raise MissingDateError("Date is missing in user input.")
         try:
             datetime.datetime.strptime(date, '%Y-%m-%d')
+            return True
         except ValueError:
-            logger.error("Invalid date: %s", date)
-            await ctx.send("请输入合法日期（YYYY-MM-DD）")
             return False
-        return True
+
+    @staticmethod
+    def _get_current_battle(guild_id: int) -> Optional[Tuple[str, str]]:
+        """Gets the current clan battle.
+
+        Args:
+            guild_id: ID of a guild
+
+        Returns:
+            A tuple that contains the battle's date and name. Or None if such
+            info is not found.
+        """
+        with shelve.open(META_FILE_PATH, writeback=True) as s:
+            guild_id = str(guild_id)
+            try:
+                date = s[guild_id]["current_battle_date"]
+                name = s[guild_id]["current_battle_name"]
+                return date, name
+            except KeyError:
+                s[guild_id] = {
+                    "current_battle_date": "",
+                    "current_battle_name": ""
+                }
+                return None
+
+    @staticmethod
+    def _set_current_battle(guild_id: int, date: str, name: str = ""):
+        """Sets the current clan battle.
+
+        Args:
+            guild_id: ID of a guild.
+            date: A date string.
+            name: An optional name.
+        """
+        with shelve.open(META_FILE_PATH, writeback=True) as s:
+            guild_id = str(guild_id)
+            s[guild_id] = {
+                "current_battle_date": date,
+                "current_battle_name": name
+            }
+
+    # pylint: disable=invalid-overridden-method
+    async def cog_command_error(self, ctx: commands.Context,
+                                error: commands.CommandError):
+        if isinstance(error, MissingDateError):
+            await ctx.send("请输入公会战日期")
 
 
 def setup(bot):
