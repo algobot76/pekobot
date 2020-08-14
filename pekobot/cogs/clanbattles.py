@@ -143,7 +143,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         cursor = conn.cursor()
 
         if not self._clan_exists(conn):
-            logger.error("The clan %s has not been created yet.", ctx.guild)
+            logger.error("The clan has not been created yet.")
             await ctx.send("公会尚未建立")
         else:
             author = ctx.author
@@ -168,7 +168,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
         cursor = conn.cursor()
 
         if not self._clan_exists(conn):
-            logger.error("The clan %s has not been created yet.", ctx.guild)
+            logger.error("The clan has not been created yet.")
             await ctx.send("公会尚未建立")
         else:
             cursor.execute(GET_ALL_CLAN_MEMBERS)
@@ -212,7 +212,7 @@ class ClanBattles(commands.Cog, name="公会战插件"):
 
         cursor.execute(CREATE_NEW_CLAN_BATTLE % (date, name))
         conn.commit()
-        logger.info("The clan battle %s (%s) has been created.", date, name)
+        logger.info("The clan battle %s has been created.", date)
         await ctx.send("成功创建公会战")
 
         # Set this clan battle as the current clan battle.
@@ -238,11 +238,10 @@ class ClanBattles(commands.Cog, name="公会战插件"):
             return
 
         date, name = data
+        logger.info("Current clan battle: %s.", data)
         if name:
-            logger.info("Current clan battle: %s (%s).", date, name)
             await ctx.send(f"当前公会战：{date} ({name})")
         else:
-            logger.info("Current clan battle: %s.", date)
             await ctx.send(f"当前公会战：{date}")
 
     @commands.command(name="list-clan-battles", aliases=("查看会战", ))
